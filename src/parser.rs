@@ -205,7 +205,7 @@ impl Parser {
             // token::TokenType::MINUS => return self.parse_prefix_expression(),
             // token::TokenType::TRUE => return Some(self.parse_boolean()),
             // token::TokenType::FALSE => return Some(self.parse_boolean()),
-            // token::TokenType::LPAREN => return self.parse_grouped_expression(),
+            token::TokenType::LPAREN => return self.parse_grouped_expression(),
             // token::TokenType::LBRACKET => return self.parse_array_literal(),
             // token::TokenType::IF => return self.parse_if_expression(),
             // token::TokenType::WHILE => return self.parse_while_expression(),
@@ -502,17 +502,17 @@ impl Parser {
     //     };
     // }
 
-    // fn parse_grouped_expression(&mut self) -> Option<ast::Expression> {
-    //     self.next_token();
+    fn parse_grouped_expression(&mut self) -> Option<ast::Expression> {
+        self.next_token();
 
-    //     let exp = self.parse_expression(Precedence::LOWEST);
+        let exp = self.parse_expression(Precedence::LOWEST);
 
-    //     if !self.expect_peek(token::TokenType::RPAREN) {
-    //         return None;
-    //     }
+        if !self.expect_peek(token::TokenType::RPAREN) {
+            return None;
+        }
 
-    //     return exp;
-    // }
+        return exp;
+    }
 
     // fn parse_array_literal(&mut self) -> Option<ast::Expression> {
     //     if let Some(elements) = self.parse_expression_list(token::TokenType::RBRACKET) {

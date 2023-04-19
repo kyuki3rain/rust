@@ -27,8 +27,8 @@ pub enum TokenType {
     // COLON, // :
     // DOT, // .
 
-    // LPAREN, // (
-    // RPAREN, // )
+    LPAREN, // (
+    RPAREN, // )
     // LBRACE, // {
     // RBRACE, // }
     // LBRACKET, // [

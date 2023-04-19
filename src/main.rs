@@ -111,4 +111,15 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 6);
     }
+
+    #[test]
+    fn test_arithmetic() {
+        let program = "4+2*3";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 10);
+
+        let program = "(4+2)*3";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 18);
+    }
 }
