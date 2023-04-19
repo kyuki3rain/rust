@@ -202,7 +202,7 @@ impl Parser {
             token::TokenType::INT => return self.parse_integer_literal(),
             // token::TokenType::STRING => return self.parse_string_literal(),
             // token::TokenType::BANG => return self.parse_prefix_expression(),
-            // token::TokenType::MINUS => return self.parse_prefix_expression(),
+            token::TokenType::MINUS => return self.parse_prefix_expression(),
             // token::TokenType::TRUE => return Some(self.parse_boolean()),
             // token::TokenType::FALSE => return Some(self.parse_boolean()),
             token::TokenType::LPAREN => return self.parse_grouped_expression(),
@@ -251,20 +251,20 @@ impl Parser {
     //     return None;
     // }
 
-    // fn parse_prefix_expression(&mut self) -> Option<ast::Expression> {
-    //     let expression_operator = self.cur_token.literal.clone();
+    fn parse_prefix_expression(&mut self) -> Option<ast::Expression> {
+        let expression_operator = self.cur_token.literal.clone();
 
-    //     self.next_token();
+        self.next_token();
 
-    //     if let Some(right) = self.parse_expression(Precedence::PREFIX) {
-    //         return Some(ast::Expression::PrefixExpression {
-    //             operator: expression_operator,
-    //             right: Box::new(right),
-    //         });
-    //     } else {
-    //         return None;
-    //     }
-    // }
+        if let Some(right) = self.parse_expression(Precedence::PREFIX) {
+            return Some(ast::Expression::PrefixExpression {
+                operator: expression_operator,
+                right: Box::new(right),
+            });
+        } else {
+            return None;
+        }
+    }
 
     // fn parse_assign_expression(&mut self, left: Box<ast::Expression>) -> Option<ast::Expression> {
     //     let precedence = self.cur_precedence();

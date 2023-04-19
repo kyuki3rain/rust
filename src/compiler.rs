@@ -1,3 +1,5 @@
+use crate::ast::Expression;
+
 use super::ast;
 // use std::cell::RefCell;
 // use std::collections::HashMap;
@@ -93,17 +95,14 @@ impl Compiler {
             // ast::Expression::StringLiteral { value } => {
             //     return Some(Rc::new(object::Object::String(value)))
             // }
-            // ast::Expression::PrefixExpression { operator, right } => {
-            //     match self.eval_expression(*right) {
-            //         Some(right_evaluated) => {
-            //             if Evaluator::is_error(&right_evaluated) {
-            //                 return Some(right_evaluated);
-            //             }
-            //             return Evaluator::eval_prefix_expression(operator, right_evaluated);
-            //         }
-            //         None => return None,
-            //     }
-            // }
+            ast::Expression::PrefixExpression { operator, right } => {
+                match self.compile_expression(*right) {
+                    Some(right_evaluated) => {
+                        return self.compile_prefix_expression(operator, right_evaluated);
+                    }
+                    None => return None,
+                }
+            }
             ast::Expression::InfixExpression {
                 left,
                 operator,
@@ -321,21 +320,24 @@ impl Compiler {
     //     return result;
     // }
 
-    // fn eval_prefix_expression(
-    //     operator: String,
-    //     right: Rc<object::Object>,
-    // ) -> Option<Rc<object::Object>> {
-    //     match &*operator {
-    //         "!" => return Evaluator::eval_bang_operator_expression(right),
-    //         "-" => return Evaluator::eval_minus_prefix_operator_expression(right),
-    //         _ => {
-    //             return Some(object::Object::new_error(format!(
-    //                 "unknown operator: {}{}",
-    //                 operator, right
-    //             )))
-    //         }
-    //     }
-    // }
+    fn compile_prefix_expression(
+        &mut self,
+        operator: String,
+        right: String,
+    ) -> Option<String> {
+        match &*operator {
+            // "!" => return Evaluator::eval_bang_operator_expression(right),
+            "-" =>
+            if let Some(left) = self.compile_expression(Expression::IntegerLiteral{value: 0}) {
+                return self.compile_infix_expression(operator, left, right);
+            } else {
+                return None;
+            },
+            _ => {
+                return None;
+            }
+        }
+    }
 
     fn compile_infix_expression(
         &mut self,
@@ -526,21 +528,7 @@ impl Compiler {
     //         return Rc::new(object::FALSE);
     //     }
     // }
-    // fn eval_minus_prefix_operator_expression(
-    //     right: Rc<object::Object>,
-    // ) -> Option<Rc<object::Object>> {
-    //     match *right {
-    //         object::Object::Integer(value) => {
-    //             return Some(Rc::new(object::Object::Integer(-value)))
-    //         }
-    //         _ => {
-    //             return Some(object::Object::new_error(format!(
-    //                 "unknown operator: -{}",
-    //                 right
-    //             )))
-    //         }
-    //     }
-    // }
+
     // fn eval_if_expression(
     //     &mut self,
     //     condition: Box<ast::Expression>,

@@ -44,7 +44,7 @@ mod test {
         let exe_path = String::new() + "./tmp/" + filename + ".out";
 
         let output = Command::new(env!("CARGO"))
-            .args(vec!["run", program])
+            .args(vec!["run", "--", program])
             .output()
             .expect("failed to compile");
 
@@ -121,5 +121,16 @@ mod test {
         let program = "(4+2)*3";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 18);
+    }
+
+    #[test]
+    fn test_minusprefix() {
+        let program = "-1";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 255);
+
+        let program = "-5+10";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 5);
     }
 }

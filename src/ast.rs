@@ -79,10 +79,10 @@ pub enum Expression {
     // StringLiteral {
     //     value: String,
     // },
-    // PrefixExpression {
-    //     operator: String,
-    //     right: Box<Expression>,
-    // },
+    PrefixExpression {
+        operator: String,
+        right: Box<Expression>,
+    },
     InfixExpression {
         left: Box<Expression>,
         operator: String,
@@ -140,9 +140,9 @@ impl fmt::Display for Expression {
             // Expression::Identifier { value } => return write!(f, "{}", value),
             Expression::IntegerLiteral { value } => return write!(f, "{}", value),
             // Expression::StringLiteral { value } => return write!(f, "\"{}\"", value),
-            // Expression::PrefixExpression { operator, right } => {
-            //     return write!(f, "({}{})", operator, right);
-            // }
+            Expression::PrefixExpression { operator, right } => {
+                return write!(f, "({}{})", operator, right);
+            }
             Expression::InfixExpression {
                 left,
                 operator,
