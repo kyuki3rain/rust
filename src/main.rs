@@ -96,4 +96,19 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 19);
     }
+
+    #[test]
+    fn test_muldiv() {
+        let program = "4*2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 8);
+
+        let program = "4/2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 2);
+
+        let program = "3*4/2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 6);
+    }
 }

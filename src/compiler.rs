@@ -39,17 +39,18 @@ impl Compiler {
         let mut result = None;
         for stmt in statements {
             result = self.compile_statement(stmt);
-            if let Some(r) = result {
-                match &*r {
-                    // object::Object::Return(_) => return Some(Rc::clone(&r)),
-                    // object::Object::Exit => return Some(Rc::new(object::EXIT)),
-                    // object::Object::Error(_) => return Some(Rc::clone(&r)),
-                    _ => result = Some(r),
-                }
-            }
+            // if let Some(r) = result {
+            //     match &*r {
+            //         object::Object::Return(_) => return Some(Rc::clone(&r)),
+            //         object::Object::Exit => return Some(Rc::new(object::EXIT)),
+            //         object::Object::Error(_) => return Some(Rc::clone(&r)),
+            //         _ => result = Some(r),
+            //     }
+            // }
         }
         return result;
     }
+
     fn compile_statement(&mut self, stmt: ast::Statement) -> Option<String> {
         match stmt {
             // ast::Statement::LetStatement { name, value } => match self.eval_expression(value) {
@@ -80,6 +81,7 @@ impl Compiler {
             // }
         }
     }
+
     fn compile_expression(&mut self, exp: ast::Expression) -> Option<String> {
         // let mut asm = String::new();
 
@@ -352,8 +354,8 @@ impl Compiler {
         match &*operator {
             "+" => asm += &format!("   add rax, rdi\n"),
             "-" => asm += &format!("   sub rax, rdi\n"),
-            // "*" => asm += &format!("   imul rax, rdi\n"),
-            // "/" => asm += &format!("   cqo\n   idiv rdi\n"),
+            "*" => asm += &format!("   imul rax, rdi\n"),
+            "/" => asm += &format!("   cqo\n   idiv rdi\n"),
             _ => {},
         }
 

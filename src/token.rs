@@ -13,9 +13,9 @@ pub enum TokenType {
     // ASSIGN, // =
     PLUS, // +
     MINUS, // -
+    ASTERISK, // *
+    SLASH, // /
     // BANG, // !
-    // ASTERISK, // *
-    // SLASH, // /
 
     // LT, // <
     // GT, // >

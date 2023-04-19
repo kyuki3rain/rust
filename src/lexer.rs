@@ -34,6 +34,10 @@ impl Lexer {
         self.skip_whitespace();
 
         let tok = match self.ch {
+            '+' => token::new_token(token::TokenType::PLUS, self.ch.to_string()),
+            '-' => token::new_token(token::TokenType::MINUS, self.ch.to_string()),
+            '*' => token::new_token(token::TokenType::ASTERISK, self.ch.to_string()),
+            '/' => token::new_token(token::TokenType::SLASH, self.ch.to_string()),
             // '=' => {
             //     if self.peek_char() == '=' {
             //         let ch = self.ch;
@@ -43,8 +47,6 @@ impl Lexer {
             //         token::new_token(token::TokenType::ASSIGN, self.ch.to_string())
             //     }
             // }
-            '+' => token::new_token(token::TokenType::PLUS, self.ch.to_string()),
-            '-' => token::new_token(token::TokenType::MINUS, self.ch.to_string()),
             // '!' => {
             //     if self.peek_char() == '=' {
             //         let ch = self.ch;
@@ -57,8 +59,6 @@ impl Lexer {
             //         token::new_token(token::TokenType::BANG, self.ch.to_string())
             //     }
             // }
-            // '*' => token::new_token(token::TokenType::ASTERISK, self.ch.to_string()),
-            // '/' => token::new_token(token::TokenType::SLASH, self.ch.to_string()),
             // '<' => token::new_token(token::TokenType::LT, self.ch.to_string()),
             // '>' => token::new_token(token::TokenType::GT, self.ch.to_string()),
             // ',' => token::new_token(token::TokenType::COMMA, self.ch.to_string()),
@@ -104,26 +104,26 @@ impl Lexer {
         return self.get_slice(position, self.position);
     }
 
-    fn read_identifier(&mut self) -> String {
-        let position = self.position;
-        while self.ch.is_alphabetic() {
-            self.read_char();
-        }
+    // fn read_identifier(&mut self) -> String {
+    //     let position = self.position;
+    //     while self.ch.is_alphabetic() {
+    //         self.read_char();
+    //     }
 
-        return self.get_slice(position, self.position);
-    }
+    //     return self.get_slice(position, self.position);
+    // }
 
-    fn read_string(&mut self) -> String {
-        let position = self.position + 1;
-        loop {
-            self.read_char();
-            if self.ch == '"' || self.ch == '\0' {
-                break;
-            }
-        }
+    // fn read_string(&mut self) -> String {
+    //     let position = self.position + 1;
+    //     loop {
+    //         self.read_char();
+    //         if self.ch == '"' || self.ch == '\0' {
+    //             break;
+    //         }
+    //     }
 
-        return self.get_slice(position, self.position);
-    }
+    //     return self.get_slice(position, self.position);
+    // }
 
     fn get_slice(&self, start: usize, end: usize) -> String {
         let begin = self.input.char_indices().nth(start).unwrap().0;
