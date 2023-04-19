@@ -133,4 +133,35 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 5);
     }
+
+    #[test]
+    fn test_cmp() {
+        let program = "1>2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 0);
+
+        let program = "1<2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 1);
+
+        let program = "1<=2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 1);
+
+        let program = "1>=2";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 0);
+
+        let program = "1>=1";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 1);
+
+        let program = "1==1";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 1);
+
+        let program = "1!=1";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 0);
+    }
 }

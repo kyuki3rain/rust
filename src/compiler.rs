@@ -6,8 +6,7 @@ use super::ast;
 // use std::rc::Rc;
 
 #[derive(PartialEq)]
-pub struct Compiler {
-}
+pub struct Compiler {}
 
 impl Compiler {
     pub fn new() -> Self {
@@ -21,23 +20,20 @@ impl Compiler {
         let mut asm = String::new();
         asm += &format!(".intel_syntax noprefix\n");
         asm += &format!(".globl main\n");
-    
+
         asm += &format!("main:\n");
-        
-        if let Some(r) = self.compile_block_statement(program.statements){
+
+        if let Some(r) = self.compile_block_statement(program.statements) {
             asm += &r;
         }
-        
+
         asm += &format!("   pop rax\n");
         asm += &format!("   ret\n");
 
         Some(asm)
     }
 
-    fn compile_block_statement(
-        &mut self,
-        statements: Vec<ast::Statement>,
-    ) -> Option<String> {
+    fn compile_block_statement(&mut self, statements: Vec<ast::Statement>) -> Option<String> {
         let mut result = None;
         for stmt in statements {
             result = self.compile_statement(stmt);
@@ -77,10 +73,9 @@ impl Compiler {
             // }
             ast::Statement::ExpressionStatement { expression } => {
                 return self.compile_expression(expression)
-            }
-            // ast::Statement::BlockStatement { statements } => {
-            //     return self.eval_block_statement(statements)
-            // }
+            } // ast::Statement::BlockStatement { statements } => {
+              //     return self.eval_block_statement(statements)
+              // }
         }
     }
 
@@ -320,19 +315,17 @@ impl Compiler {
     //     return result;
     // }
 
-    fn compile_prefix_expression(
-        &mut self,
-        operator: String,
-        right: String,
-    ) -> Option<String> {
+    fn compile_prefix_expression(&mut self, operator: String, right: String) -> Option<String> {
         match &*operator {
             // "!" => return Evaluator::eval_bang_operator_expression(right),
-            "-" =>
-            if let Some(left) = self.compile_expression(Expression::IntegerLiteral{value: 0}) {
-                return self.compile_infix_expression(operator, left, right);
-            } else {
-                return None;
-            },
+            "-" => {
+                if let Some(left) = self.compile_expression(Expression::IntegerLiteral { value: 0 })
+                {
+                    return self.compile_infix_expression(operator, left, right);
+                } else {
+                    return None;
+                }
+            }
             _ => {
                 return None;
             }
@@ -357,8 +350,41 @@ impl Compiler {
             "+" => asm += &format!("   add rax, rdi\n"),
             "-" => asm += &format!("   sub rax, rdi\n"),
             "*" => asm += &format!("   imul rax, rdi\n"),
-            "/" => asm += &format!("   cqo\n   idiv rdi\n"),
-            _ => {},
+            "/" => {
+                asm += &format!("   cqo\n");
+                asm += &format!("   idiv rdi\n");
+            },
+            "==" => {
+                asm += &format!("   cmp rax, rdi\n");
+                asm += &format!("   sete al\n");
+                asm += &format!("  movzb rax, al\n");
+            },
+            "!=" => {
+                asm += &format!("   cmp rax, rdi\n");
+                asm += &format!("   setne al\n");
+                asm += &format!("  movzb rax, al\n");
+            },
+            ">" => {
+                asm += &format!("   cmp rdi, rax\n");
+                asm += &format!("   setl al\n");
+                asm += &format!("  movzb rax, al\n");
+            },
+            "<" => {
+                asm += &format!("   cmp rax, rdi\n");
+                asm += &format!("   setl al\n");
+                asm += &format!("  movzb rax, al\n");
+            },
+            ">=" => {
+                asm += &format!("   cmp rdi, rax\n");
+                asm += &format!("   setle al\n");
+                asm += &format!("  movzb rax, al\n");
+            },
+            "<=" => {
+                asm += &format!("   cmp rax, rdi\n");
+                asm += &format!("   setle al\n");
+                asm += &format!("  movzb rax, al\n");
+            },
+            _ => {}
         }
 
         asm += &format!("   push rax\n");

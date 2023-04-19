@@ -17,10 +17,12 @@ pub enum TokenType {
     SLASH, // /
     // BANG, // !
 
-    // LT, // <
-    // GT, // >
-    // EQ, // ==
-    // NOTEQ, // !=
+    LT, // <
+    GT, // >
+    EQ, // ==
+    NOTEQ, // !=
+    LTEQ, // <=
+    GTEQ, // >=
 
     // COMMA, // ,
     // SEMICOLON, // ;

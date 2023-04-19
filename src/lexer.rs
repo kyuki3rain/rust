@@ -38,29 +38,47 @@ impl Lexer {
             '-' => token::new_token(token::TokenType::MINUS, self.ch.to_string()),
             '*' => token::new_token(token::TokenType::ASTERISK, self.ch.to_string()),
             '/' => token::new_token(token::TokenType::SLASH, self.ch.to_string()),
-            // '=' => {
-            //     if self.peek_char() == '=' {
-            //         let ch = self.ch;
-            //         self.read_char();
-            //         token::new_token(token::TokenType::EQ, ch.to_string() + &self.ch.to_string())
-            //     } else {
-            //         token::new_token(token::TokenType::ASSIGN, self.ch.to_string())
-            //     }
-            // }
-            // '!' => {
-            //     if self.peek_char() == '=' {
-            //         let ch = self.ch;
-            //         self.read_char();
-            //         token::new_token(
-            //             token::TokenType::NOTEQ,
-            //             ch.to_string() + &self.ch.to_string(),
-            //         )
-            //     } else {
-            //         token::new_token(token::TokenType::BANG, self.ch.to_string())
-            //     }
-            // }
-            // '<' => token::new_token(token::TokenType::LT, self.ch.to_string()),
-            // '>' => token::new_token(token::TokenType::GT, self.ch.to_string()),
+            '=' => {
+                if self.peek_char() == '=' {
+                    let ch = self.ch;
+                    self.read_char();
+                    token::new_token(token::TokenType::EQ, ch.to_string() + &self.ch.to_string())
+                } else {
+                    // token::new_token(token::TokenType::ASSIGN, self.ch.to_string())
+                    token::new_token(token::TokenType::ILLEGAL, self.ch.to_string())
+                }
+            }
+            '<' => {
+                if self.peek_char() == '=' {
+                    let ch = self.ch;
+                    self.read_char();
+                    token::new_token(token::TokenType::LTEQ, ch.to_string() + &self.ch.to_string())
+                } else {
+                    token::new_token(token::TokenType::LT, self.ch.to_string())
+                }
+            }
+            '>' => {
+                if self.peek_char() == '=' {
+                    let ch = self.ch;
+                    self.read_char();
+                    token::new_token(token::TokenType::GTEQ, ch.to_string() + &self.ch.to_string())
+                } else {
+                    token::new_token(token::TokenType::GT, self.ch.to_string())
+                }
+            }
+            '!' => {
+                if self.peek_char() == '=' {
+                    let ch = self.ch;
+                    self.read_char();
+                    token::new_token(
+                        token::TokenType::NOTEQ,
+                        ch.to_string() + &self.ch.to_string(),
+                    )
+                } else {
+                    // token::new_token(token::TokenType::BANG, self.ch.to_string())
+                    token::new_token(token::TokenType::ILLEGAL, self.ch.to_string())
+                }
+            }
             // ',' => token::new_token(token::TokenType::COMMA, self.ch.to_string()),
             // ';' => token::new_token(token::TokenType::SEMICOLON, self.ch.to_string()),
             '(' => token::new_token(token::TokenType::LPAREN, self.ch.to_string()),
