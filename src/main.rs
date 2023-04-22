@@ -186,4 +186,11 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 35);
     }
+
+    #[test]
+    fn test_return() {
+        let program = "a = 5; return a + 2; a + 5";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 7);
+    }
 }

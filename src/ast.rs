@@ -29,7 +29,7 @@ impl fmt::Display for Program {
 #[derive(Clone, PartialEq)]
 pub enum Statement {
     // LetStatement { name: Expression, value: Expression },
-    // ReturnStatement { return_value: Expression },
+    ReturnStatement { return_value: Expression },
     ExpressionStatement { expression: Expression },
     // BlockStatement { statements: Vec<Statement> },
 }
@@ -53,9 +53,9 @@ impl fmt::Display for Statement {
             // Statement::LetStatement { name, value } => {
             //     return write!(f, "let {} = {};", name, value)
             // }
-            // Statement::ReturnStatement { return_value } => {
-            //     return write!(f, "return {};", return_value);
-            // }
+            Statement::ReturnStatement { return_value } => {
+                return write!(f, "return {};", return_value);
+            }
             Statement::ExpressionStatement { expression } => return write!(f, "{}", expression),
             // Statement::BlockStatement { statements } => {
             //     let mut s = "".to_string();

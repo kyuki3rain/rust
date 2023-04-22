@@ -95,7 +95,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Option<ast::Statement> {
         match self.cur_token.token_type {
             // token::TokenType::LET => return self.parse_let_statement(),
-            // token::TokenType::RETURN => return self.parse_return_statement(),
+            token::TokenType::RETURN => return self.parse_return_statement(),
             _ => return self.parse_expression_statement(),
         }
     }
@@ -126,21 +126,21 @@ impl Parser {
     //     }
     // }
 
-    // fn parse_return_statement(&mut self) -> Option<ast::Statement> {
-    //     self.next_token();
+    fn parse_return_statement(&mut self) -> Option<ast::Statement> {
+        self.next_token();
 
-    //     if let Some(expression) = self.parse_expression(Precedence::LOWEST) {
-    //         let stmt = ast::Statement::ReturnStatement {
-    //             return_value: expression,
-    //         };
-    //         if self.peek_token_is(&token::TokenType::SEMICOLON) {
-    //             self.next_token();
-    //         }
-    //         return Some(stmt);
-    //     } else {
-    //         return None;
-    //     }
-    // }
+        if let Some(expression) = self.parse_expression(Precedence::LOWEST) {
+            let stmt = ast::Statement::ReturnStatement {
+                return_value: expression,
+            };
+            if self.peek_token_is(&token::TokenType::SEMICOLON) {
+                self.next_token();
+            }
+            return Some(stmt);
+        } else {
+            return None;
+        }
+    }
 
     fn parse_expression_statement(&mut self) -> Option<ast::Statement> {
         if let Some(expression) = self.parse_expression(Precedence::LOWEST) {

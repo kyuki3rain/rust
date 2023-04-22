@@ -5,14 +5,21 @@ use super::ast;
 // use std::collections::HashMap;
 // use std::rc::Rc;
 
+enum Status {
+    DEFAULT,
+    RETURN,
+}
+
 pub struct Compiler {
     env: environment::Environment,
+    status: Status,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         return Compiler {
             env: environment::Environment::new(),
+            status: Status::DEFAULT,
         };
     }
 
@@ -43,15 +50,12 @@ impl Compiler {
             if let Some(result) = self.compile_statement(stmt) {
                 asm += &result;
                 asm += &format!("  pop rax\n");
+
+                if let Status::RETURN = self.status {
+                    self.status = Status::DEFAULT;
+                    return Some(asm);
+                }
             }
-            // if let Some(r) = result {
-            //     match &*r {
-            //         object::Object::Return(_) => return Some(Rc::clone(&r)),
-            //         object::Object::Exit => return Some(Rc::new(object::EXIT)),
-            //         object::Object::Error(_) => return Some(Rc::clone(&r)),
-            //         _ => result = Some(r),
-            //     }
-            // }
         }
         return Some(asm);
     }
@@ -67,22 +71,21 @@ impl Compiler {
             //     }
             //     None => return None,
             // },
-            // ast::Statement::ReturnStatement { return_value } => {
-            //     match self.eval_expression(return_value) {
-            //         Some(value) => {
-            //             if Evaluator::is_error(&value) {
-            //                 return Some(value);
-            //             }
-            //             return Some(Rc::new(object::Object::Return(Rc::clone(&value))));
-            //         }
-            //         None => return None,
-            //     }
-            // }
+            ast::Statement::ReturnStatement { return_value } => {
+                match self.compile_expression(return_value) {
+                    Some(value) => {
+                        self.status = Status::RETURN;
+                        return Some(value);
+                    }
+                    None => return None,
+                }
+            }
             ast::Statement::ExpressionStatement { expression } => {
                 return self.compile_expression(expression)
-            } // ast::Statement::BlockStatement { statements } => {
-              //     return self.eval_block_statement(statements)
-              // }
+            }
+            // ast::Statement::BlockStatement { statements } => {
+            //     return self.eval_block_statement(statements)
+            // }
         }
     }
 

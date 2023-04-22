@@ -42,7 +42,7 @@ pub enum TokenType {
     // FALSE, // false
     // IF, // if
     // ELSE, // else
-    // RETURN, // return
+    RETURN, // return
     // WHILE, // while
 }
 
@@ -76,7 +76,7 @@ pub fn lookup_ident(ident: &str) -> TokenType {
         // "false" => TokenType::FALSE,
         // "if" => TokenType::IF,
         // "else" => TokenType::ELSE,
-        // "return" => TokenType::RETURN,
+        "return" => TokenType::RETURN,
         // "while" => TokenType::WHILE,
         _ => TokenType::IDENT,
     }
