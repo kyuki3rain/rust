@@ -1,18 +1,18 @@
-use crate::ast::Expression;
+use crate::{ast::Expression, environment};
 
 use super::ast;
 // use std::cell::RefCell;
 // use std::collections::HashMap;
 // use std::rc::Rc;
 
-#[derive(PartialEq)]
-pub struct Compiler {}
+pub struct Compiler {
+    env: environment::Environment,
+}
 
 impl Compiler {
     pub fn new() -> Self {
         return Compiler {
-            // env: Rc::new(RefCell::new(environment::Environment::new())),
-            // builtin: builtin::new_builtins(),
+            env: environment::Environment::new(),
         };
     }
 
@@ -23,12 +23,21 @@ impl Compiler {
 
         asm += &format!("main:\n");
 
+        asm += &format!("  push rbp\n");
+        asm += &format!("  mov rbp, rsp\n");
+
+        asm += &format!("  mov rdi, 10\n");
+        asm += &format!("  mov rax, rbp\n");
+        asm += &format!("  sub rax, {}\n", 8);
+        asm += &format!("  mov [rax], rdi\n");
+
         if let Some(r) = self.compile_block_statement(program.statements) {
             asm += &r;
         }
 
-        asm += &format!("   pop rax\n");
-        asm += &format!("   ret\n");
+        asm += &format!("  pop rax\n");
+        asm += &format!("  pop rbp\n");
+        asm += &format!("  ret\n");
 
         Some(asm)
     }
@@ -83,9 +92,9 @@ impl Compiler {
         // let mut asm = String::new();
 
         match exp {
-            // ast::Expression::Identifier { value } => return self.eval_identifier(value),
+            ast::Expression::Identifier { value } => return self.compile_identifier(value),
             ast::Expression::IntegerLiteral { value } => {
-                return Some(format!("   push {}\n", value));
+                return Some(format!("  push {}\n", value));
             }
             // ast::Expression::StringLiteral { value } => {
             //     return Some(Rc::new(object::Object::String(value)))
@@ -343,51 +352,51 @@ impl Compiler {
         asm += &left;
         asm += &right;
 
-        asm += &format!("   pop rdi\n");
-        asm += &format!("   pop rax\n");
+        asm += &format!("  pop rdi\n");
+        asm += &format!("  pop rax\n");
 
         match &*operator {
-            "+" => asm += &format!("   add rax, rdi\n"),
-            "-" => asm += &format!("   sub rax, rdi\n"),
-            "*" => asm += &format!("   imul rax, rdi\n"),
+            "+" => asm += &format!("  add rax, rdi\n"),
+            "-" => asm += &format!("  sub rax, rdi\n"),
+            "*" => asm += &format!("  imul rax, rdi\n"),
             "/" => {
-                asm += &format!("   cqo\n");
-                asm += &format!("   idiv rdi\n");
+                asm += &format!("  cqo\n");
+                asm += &format!("  idiv rdi\n");
             },
             "==" => {
-                asm += &format!("   cmp rax, rdi\n");
-                asm += &format!("   sete al\n");
+                asm += &format!("  cmp rax, rdi\n");
+                asm += &format!("  sete al\n");
                 asm += &format!("  movzb rax, al\n");
             },
             "!=" => {
-                asm += &format!("   cmp rax, rdi\n");
-                asm += &format!("   setne al\n");
+                asm += &format!("  cmp rax, rdi\n");
+                asm += &format!("  setne al\n");
                 asm += &format!("  movzb rax, al\n");
             },
             ">" => {
-                asm += &format!("   cmp rdi, rax\n");
-                asm += &format!("   setl al\n");
+                asm += &format!("  cmp rdi, rax\n");
+                asm += &format!("  setl al\n");
                 asm += &format!("  movzb rax, al\n");
             },
             "<" => {
-                asm += &format!("   cmp rax, rdi\n");
-                asm += &format!("   setl al\n");
+                asm += &format!("  cmp rax, rdi\n");
+                asm += &format!("  setl al\n");
                 asm += &format!("  movzb rax, al\n");
             },
             ">=" => {
-                asm += &format!("   cmp rdi, rax\n");
-                asm += &format!("   setle al\n");
+                asm += &format!("  cmp rdi, rax\n");
+                asm += &format!("  setle al\n");
                 asm += &format!("  movzb rax, al\n");
             },
             "<=" => {
-                asm += &format!("   cmp rax, rdi\n");
-                asm += &format!("   setle al\n");
+                asm += &format!("  cmp rax, rdi\n");
+                asm += &format!("  setle al\n");
                 asm += &format!("  movzb rax, al\n");
             },
             _ => {}
         }
 
-        asm += &format!("   push rax\n");
+        asm += &format!("  push rax\n");
 
         Some(asm)
 
@@ -613,18 +622,23 @@ impl Compiler {
     //     return Some(object);
     // }
 
-    // fn eval_identifier(&mut self, ident: String) -> Option<Rc<object::Object>> {
-    //     if let Some(value) = self.env.borrow_mut().get((&ident).to_string()) {
-    //         return Some(value);
-    //     }
-    //     if let Some(value) = self.builtin.get(&ident) {
-    //         return Some(Rc::clone(value));
-    //     }
-    //     return Some(object::Object::new_error(format!(
-    //         "identifier not found: {}",
-    //         ident
-    //     )));
-    // }
+    fn compile_identifier(&mut self, ident: String) -> Option<String> {
+        if let Some(variable) = self.env.get(&ident) {
+            let mut asm = String::new();
+            asm += &format!("  mov rax, rbp\n");
+            asm += &format!("  sub rax, {}\n", variable.offset);
+            asm += &format!("  push [rax]\n");
+            return Some(asm);
+        }
+        // if let Some(value) = self.builtin.get(&ident) {
+        //     return Some(Rc::clone(value));
+        // }
+        return Some(format!(
+            "identifier not found: {}",
+            ident
+        ));
+    }
+
     // fn is_truthy(obj: Rc<object::Object>) -> bool {
     //     match *obj {
     //         object::Object::Null => return false,

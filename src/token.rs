@@ -6,11 +6,11 @@ pub enum TokenType {
     ILLEGAL,
     EOF,
 
-    // IDENT, // add, foobar, x, y, ...
+    IDENT, // add, foobar, x, y, ...
     INT, // 1343456
     // STRING, // "hello world"
 
-    // ASSIGN, // =
+    ASSIGN, // =
     PLUS, // +
     MINUS, // -
     ASTERISK, // *
@@ -68,19 +68,19 @@ impl fmt::Display for Token {
     }
 }
 
-// pub fn lookup_ident(ident: &str) -> TokenType {
-//     match ident {
-//         "fn" => TokenType::FUNCTION,
-//         "let" => TokenType::LET,
-//         "true" => TokenType::TRUE,
-//         "false" => TokenType::FALSE,
-//         "if" => TokenType::IF,
-//         "else" => TokenType::ELSE,
-//         "return" => TokenType::RETURN,
-//         "while" => TokenType::WHILE,
-//         _ => TokenType::IDENT,
-//     }
-// }
+pub fn lookup_ident(ident: &str) -> TokenType {
+    match ident {
+        // "fn" => TokenType::FUNCTION,
+        // "let" => TokenType::LET,
+        // "true" => TokenType::TRUE,
+        // "false" => TokenType::FALSE,
+        // "if" => TokenType::IF,
+        // "else" => TokenType::ELSE,
+        // "return" => TokenType::RETURN,
+        // "while" => TokenType::WHILE,
+        _ => TokenType::IDENT,
+    }
+}
 
 pub fn new_token(token_type: TokenType, literal: String) -> Token {
     return Token {

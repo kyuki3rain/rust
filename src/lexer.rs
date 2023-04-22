@@ -95,12 +95,12 @@ impl Lexer {
                 literal: String::from(""),
             },
             _ => {
-                // if self.ch.is_alphabetic() {
-                //     let literal = self.read_identifier();
-                //     let token_type = token::lookup_ident(&literal);
+                if self.ch.is_alphabetic() {
+                    let literal = self.read_identifier();
+                    let token_type = token::lookup_ident(&literal);
 
-                //     return token::new_token(token_type, literal);
-                // } else
+                    return token::new_token(token_type, literal);
+                } else
                 if self.ch.is_numeric() {
                     return token::new_token(token::TokenType::INT, self.read_number());
                 } else {
@@ -122,14 +122,14 @@ impl Lexer {
         return self.get_slice(position, self.position);
     }
 
-    // fn read_identifier(&mut self) -> String {
-    //     let position = self.position;
-    //     while self.ch.is_alphabetic() {
-    //         self.read_char();
-    //     }
+    fn read_identifier(&mut self) -> String {
+        let position = self.position;
+        while self.ch.is_alphabetic() {
+            self.read_char();
+        }
 
-    //     return self.get_slice(position, self.position);
-    // }
+        return self.get_slice(position, self.position);
+    }
 
     // fn read_string(&mut self) -> String {
     //     let position = self.position + 1;

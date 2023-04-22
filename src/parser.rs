@@ -200,7 +200,7 @@ impl Parser {
 
     fn parse_prefix_expression_fns(&mut self) -> Option<ast::Expression> {
         match self.cur_token.token_type {
-            // token::TokenType::IDENT => return Some(self.parse_identifier()),
+            token::TokenType::IDENT => return Some(self.parse_identifier()),
             token::TokenType::INT => return self.parse_integer_literal(),
             // token::TokenType::STRING => return self.parse_string_literal(),
             // token::TokenType::BANG => return self.parse_prefix_expression(),
@@ -476,11 +476,11 @@ impl Parser {
     //     Some(ast::Expression::HashLiteral { pairs })
     // }
 
-    // fn parse_identifier(&self) -> ast::Expression {
-    //     return ast::Expression::Identifier {
-    //         value: self.cur_token.literal.clone(),
-    //     };
-    // }
+    fn parse_identifier(&self) -> ast::Expression {
+        return ast::Expression::Identifier {
+            value: self.cur_token.literal.clone(),
+        };
+    }
 
     fn parse_integer_literal(&mut self) -> Option<ast::Expression> {
         if let Ok(value) = self.cur_token.literal.parse::<i64>() {

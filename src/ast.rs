@@ -70,9 +70,9 @@ impl fmt::Display for Statement {
 
 #[derive(Clone, PartialEq)]
 pub enum Expression {
-    // Identifier {
-    //     value: String,
-    // },
+    Identifier {
+        value: String,
+    },
     IntegerLiteral {
         value: i64,
     },
@@ -137,7 +137,7 @@ impl Expression {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            // Expression::Identifier { value } => return write!(f, "{}", value),
+            Expression::Identifier { value } => return write!(f, "{}", value),
             Expression::IntegerLiteral { value } => return write!(f, "{}", value),
             // Expression::StringLiteral { value } => return write!(f, "\"{}\"", value),
             Expression::PrefixExpression { operator, right } => {
