@@ -166,12 +166,12 @@ mod test {
         assert_eq!(output.status.code().unwrap(), 0);
     }
 
-    // #[test]
-    // fn test_semicolon() {
-    //     let program = "5 + 10; 8 * 5";
-    //     let output = execute(program);
-    //     assert_eq!(output.status.code().unwrap(), 0);
-    // }
+    #[test]
+    fn test_semicolon() {
+        let program = "5 + 10; 8 * 5";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 40);
+    }
     
     #[test]
     fn test_ident() {

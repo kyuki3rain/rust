@@ -44,8 +44,7 @@ impl Lexer {
                     self.read_char();
                     token::new_token(token::TokenType::EQ, ch.to_string() + &self.ch.to_string())
                 } else {
-                    // token::new_token(token::TokenType::ASSIGN, self.ch.to_string())
-                    token::new_token(token::TokenType::ILLEGAL, self.ch.to_string())
+                    token::new_token(token::TokenType::ASSIGN, self.ch.to_string())
                 }
             }
             '<' => {
@@ -80,7 +79,7 @@ impl Lexer {
                 }
             }
             // ',' => token::new_token(token::TokenType::COMMA, self.ch.to_string()),
-            // ';' => token::new_token(token::TokenType::SEMICOLON, self.ch.to_string()),
+            ';' => token::new_token(token::TokenType::SEMICOLON, self.ch.to_string()),
             '(' => token::new_token(token::TokenType::LPAREN, self.ch.to_string()),
             ')' => token::new_token(token::TokenType::RPAREN, self.ch.to_string()),
             // '{' => token::new_token(token::TokenType::LBRACE, self.ch.to_string()),

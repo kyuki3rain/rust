@@ -25,7 +25,7 @@ pub enum TokenType {
     GTEQ, // >=
 
     // COMMA, // ,
-    // SEMICOLON, // ;
+    SEMICOLON, // ;
     // COLON, // :
     // DOT, // .
 

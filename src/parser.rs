@@ -147,9 +147,9 @@ impl Parser {
             let stmt = ast::Statement::ExpressionStatement {
                 expression: expression,
             };
-            // if self.peek_token_is(&token::TokenType::SEMICOLON) {
-            //     self.next_token();
-            // }
+            if self.peek_token_is(&token::TokenType::SEMICOLON) {
+                self.next_token();
+            }
             return Some(stmt);
         } else {
             return None;
