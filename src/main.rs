@@ -179,4 +179,11 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 20);
     }
+
+    #[test]
+    fn test_complex_program() {
+        let program = "a = 5; b = 10; c = a + b; d = a * b; d - c";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 35);
+    }
 }

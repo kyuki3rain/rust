@@ -39,9 +39,9 @@ impl Environment {
         self.store.get(name)
     }
 
-    pub fn set(&mut self, name: String) {
+    pub fn set(&mut self, name: &str) {
         self.offset += 8;
-        self.store.insert(name, Variable { offset: self.offset });
+        self.store.insert(name.to_string(), Variable { offset: self.offset });
     }
 
     pub fn contains_key(&self, name: &str) -> bool {

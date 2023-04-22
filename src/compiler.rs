@@ -30,6 +30,7 @@ impl Compiler {
             asm += &r;
         }
 
+        asm += &format!("  mov rsp, rbp\n");
         asm += &format!("  pop rbp\n");
         asm += &format!("  ret\n");
 
@@ -135,22 +136,24 @@ impl Compiler {
                 match self.compile_expression(*right) {
                     Some(right_evaluated) => match *left {
                         ast::Expression::Identifier { value } => {
-                            // if !self.env.contains_key(&value) {
-                            //     return Some(format!("{} is not defined before.", &value));
-                            // }
-                            self.env.set(value);
+                            asm += &format!("# {}\n", value);
+                            if !self.env.contains_key(&value) {
+                                self.env.set(&value);
+                                asm += &format!("  sub rsp, {}\n", 8);
+                            }
 
-                            
-                            asm += &format!("  mov rax, rbp\n");
-                            asm += &format!("  sub rax, {}\n", self.env.offset);
-                            asm += &format!("  push rax\n");
-                            
-                            asm += &right_evaluated;
-
-                            asm += &format!("  pop rdi\n");
-                            asm += &format!("  pop rax\n");
-                            asm += &format!("  mov [rax], rdi\n");
-                            asm += &format!("  push rdi\n");
+                            if let Some(variable) = self.env.get(&value) {
+                                asm += &format!("  mov rax, rbp\n");
+                                asm += &format!("  sub rax, {}\n", variable.offset);
+                                asm += &format!("  push rax\n");
+                                
+                                asm += &right_evaluated;
+    
+                                asm += &format!("  pop rdi\n");
+                                asm += &format!("  pop rax\n");
+                                asm += &format!("  mov [rax], rdi\n");
+                                asm += &format!("  push rdi\n");
+                            }
 
                             return Some(asm);
                         }
