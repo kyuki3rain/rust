@@ -6,17 +6,15 @@ pub struct Variable {
 
 pub struct Environment {
     pub store: HashMap<String, Variable>,
+    pub offset: usize,
     pub outer: Option<Box<Environment>>,
 }
 
 impl Environment {
     pub fn new() -> Environment {
-        let mut store = HashMap::new();
-
-        store.insert(String::from("a"), Variable { offset: 8 });
-        
         Environment {
-            store,
+            store: HashMap::new(),
+            offset: 0,
             outer: None,
         }
     }
@@ -24,6 +22,7 @@ impl Environment {
     pub fn new_enclosed_environment(outer: Environment) -> Environment {
         return Environment {
             store: HashMap::new(),
+            offset: 0,
             outer: Some(Box::new(outer)),
         };
     }
@@ -40,7 +39,12 @@ impl Environment {
         self.store.get(name)
     }
 
-    pub fn set(&mut self, name: String, variable: Variable) {
-        self.store.insert(name, variable);
+    pub fn set(&mut self, name: String) {
+        self.offset += 8;
+        self.store.insert(name, Variable { offset: self.offset });
+    }
+
+    pub fn contains_key(&self, name: &str) -> bool {
+        self.store.contains_key(name)
     }
 }

@@ -175,7 +175,7 @@ mod test {
     
     #[test]
     fn test_ident() {
-        let program = "a + 10";
+        let program = "a = 10; a + 10";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 20);
     }

@@ -26,16 +26,10 @@ impl Compiler {
         asm += &format!("  push rbp\n");
         asm += &format!("  mov rbp, rsp\n");
 
-        asm += &format!("  mov rdi, 10\n");
-        asm += &format!("  mov rax, rbp\n");
-        asm += &format!("  sub rax, {}\n", 8);
-        asm += &format!("  mov [rax], rdi\n");
-
         if let Some(r) = self.compile_block_statement(program.statements) {
             asm += &r;
         }
 
-        asm += &format!("  pop rax\n");
         asm += &format!("  pop rbp\n");
         asm += &format!("  ret\n");
 
@@ -43,9 +37,12 @@ impl Compiler {
     }
 
     fn compile_block_statement(&mut self, statements: Vec<ast::Statement>) -> Option<String> {
-        let mut result = None;
+        let mut asm = String::new();
         for stmt in statements {
-            result = self.compile_statement(stmt);
+            if let Some(result) = self.compile_statement(stmt) {
+                asm += &result;
+                asm += &format!("  pop rax\n");
+            }
             // if let Some(r) = result {
             //     match &*r {
             //         object::Object::Return(_) => return Some(Rc::clone(&r)),
@@ -55,7 +52,7 @@ impl Compiler {
             //     }
             // }
         }
-        return result;
+        return Some(asm);
     }
 
     fn compile_statement(&mut self, stmt: ast::Statement) -> Option<String> {
@@ -132,31 +129,36 @@ impl Compiler {
                 }
                 None => return None,
             },
-            // ast::Expression::AssignExpression { left, right } => {
-            //     match self.eval_expression(*right) {
-            //         Some(right_evaluated) => {
-            //             if Evaluator::is_error(&right_evaluated) {
-            //                 return Some(right_evaluated);
-            //             }
-            //             match *left {
-            //                 ast::Expression::Identifier { value } => {
-            //                     if !self.env.borrow_mut().contains_key(&value) {
-            //                         return Some(object::Object::new_error(format!(
-            //                             "{} is not defined before.",
-            //                             &value
-            //                         )));
-            //                     }
-            //                     self.env
-            //                         .borrow_mut()
-            //                         .set(value, Rc::clone(&right_evaluated));
-            //                     return Some(right_evaluated);
-            //                 }
-            //                 _ => return None,
-            //             }
-            //         }
-            //         None => return None,
-            //     }
-            // }
+            ast::Expression::AssignExpression { left, right } => {
+                let mut asm = String::new();
+
+                match self.compile_expression(*right) {
+                    Some(right_evaluated) => match *left {
+                        ast::Expression::Identifier { value } => {
+                            // if !self.env.contains_key(&value) {
+                            //     return Some(format!("{} is not defined before.", &value));
+                            // }
+                            self.env.set(value);
+
+                            
+                            asm += &format!("  mov rax, rbp\n");
+                            asm += &format!("  sub rax, {}\n", self.env.offset);
+                            asm += &format!("  push rax\n");
+                            
+                            asm += &right_evaluated;
+
+                            asm += &format!("  pop rdi\n");
+                            asm += &format!("  pop rax\n");
+                            asm += &format!("  mov [rax], rdi\n");
+                            asm += &format!("  push rdi\n");
+
+                            return Some(asm);
+                        }
+                        _ => return None,
+                    },
+                    None => return None,
+                }
+            }
             // ast::Expression::Boolean { value } => return Some(Evaluator::eval_boolean(value)),
             // ast::Expression::ArrayLiteral { elements } => {
             //     let elms = self.eval_expressions(elements);
@@ -362,37 +364,37 @@ impl Compiler {
             "/" => {
                 asm += &format!("  cqo\n");
                 asm += &format!("  idiv rdi\n");
-            },
+            }
             "==" => {
                 asm += &format!("  cmp rax, rdi\n");
                 asm += &format!("  sete al\n");
                 asm += &format!("  movzb rax, al\n");
-            },
+            }
             "!=" => {
                 asm += &format!("  cmp rax, rdi\n");
                 asm += &format!("  setne al\n");
                 asm += &format!("  movzb rax, al\n");
-            },
+            }
             ">" => {
                 asm += &format!("  cmp rdi, rax\n");
                 asm += &format!("  setl al\n");
                 asm += &format!("  movzb rax, al\n");
-            },
+            }
             "<" => {
                 asm += &format!("  cmp rax, rdi\n");
                 asm += &format!("  setl al\n");
                 asm += &format!("  movzb rax, al\n");
-            },
+            }
             ">=" => {
                 asm += &format!("  cmp rdi, rax\n");
                 asm += &format!("  setle al\n");
                 asm += &format!("  movzb rax, al\n");
-            },
+            }
             "<=" => {
                 asm += &format!("  cmp rax, rdi\n");
                 asm += &format!("  setle al\n");
                 asm += &format!("  movzb rax, al\n");
-            },
+            }
             _ => {}
         }
 
@@ -627,16 +629,14 @@ impl Compiler {
             let mut asm = String::new();
             asm += &format!("  mov rax, rbp\n");
             asm += &format!("  sub rax, {}\n", variable.offset);
-            asm += &format!("  push [rax]\n");
+            asm += &format!("  mov rax, [rax]\n");
+            asm += &format!("  push rax\n");
             return Some(asm);
         }
         // if let Some(value) = self.builtin.get(&ident) {
         //     return Some(Rc::clone(value));
         // }
-        return Some(format!(
-            "identifier not found: {}",
-            ident
-        ));
+        return Some(format!("identifier not found: {}", ident));
     }
 
     // fn is_truthy(obj: Rc<object::Object>) -> bool {
