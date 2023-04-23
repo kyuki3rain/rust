@@ -31,8 +31,8 @@ pub enum TokenType {
 
     LPAREN, // (
     RPAREN, // )
-    // LBRACE, // {
-    // RBRACE, // }
+    LBRACE, // {
+    RBRACE, // }
     // LBRACKET, // [
     // RBRACKET, // ]
 
@@ -40,8 +40,8 @@ pub enum TokenType {
     // LET,     // let
     // TRUE,   // true
     // FALSE, // false
-    // IF, // if
-    // ELSE, // else
+    IF, // if
+    ELSE, // else
     RETURN, // return
     // WHILE, // while
 }
@@ -74,8 +74,8 @@ pub fn lookup_ident(ident: &str) -> TokenType {
         // "let" => TokenType::LET,
         // "true" => TokenType::TRUE,
         // "false" => TokenType::FALSE,
-        // "if" => TokenType::IF,
-        // "else" => TokenType::ELSE,
+        "if" => TokenType::IF,
+        "else" => TokenType::ELSE,
         "return" => TokenType::RETURN,
         // "while" => TokenType::WHILE,
         _ => TokenType::IDENT,

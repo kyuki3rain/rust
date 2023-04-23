@@ -193,4 +193,15 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 7);
     }
+
+    #[test]
+    fn test_if_else() {
+        let program = "if (5 > 4) { 7 } else { 8 }";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 7);
+
+        let program = "if (5 < 4) { 7 } else { 8 }";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 8);
+    }
 }

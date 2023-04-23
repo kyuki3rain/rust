@@ -31,7 +31,7 @@ pub enum Statement {
     // LetStatement { name: Expression, value: Expression },
     ReturnStatement { return_value: Expression },
     ExpressionStatement { expression: Expression },
-    // BlockStatement { statements: Vec<Statement> },
+    BlockStatement { statements: Vec<Statement> },
 }
 
 impl Statement {
@@ -57,13 +57,13 @@ impl fmt::Display for Statement {
                 return write!(f, "return {};", return_value);
             }
             Statement::ExpressionStatement { expression } => return write!(f, "{}", expression),
-            // Statement::BlockStatement { statements } => {
-            //     let mut s = "".to_string();
-            //     for stmt in statements {
-            //         s += &format!("\t{}\r\n", stmt);
-            //     }
-            //     return write!(f, "{{\r\n{}}}", s);
-            // }
+            Statement::BlockStatement { statements } => {
+                let mut s = "".to_string();
+                for stmt in statements {
+                    s += &format!("\t{}\r\n", stmt);
+                }
+                return write!(f, "{{\r\n{}}}", s);
+            }
         }
     }
 }
@@ -102,11 +102,11 @@ pub enum Expression {
     //     left: Box<Expression>,
     //     index: Box<Expression>,
     // },
-    // IfExpression {
-    //     condition: Box<Expression>,
-    //     consequence: Box<Statement>,
-    //     alternative: Option<Box<Statement>>,
-    // },
+    IfExpression {
+        condition: Box<Expression>,
+        consequence: Box<Statement>,
+        alternative: Option<Box<Statement>>,
+    },
     // WhileExpression {
     //     condition: Box<Expression>,
     //     consequence: Box<Statement>,
@@ -122,7 +122,7 @@ pub enum Expression {
     // HashLiteral {
     //     pairs: Vec<(Expression, Expression)>,
     // },
-    // NeedNext,
+    NeedNext,
 }
 
 impl Expression {
@@ -168,14 +168,14 @@ impl fmt::Display for Expression {
             // Expression::IndexExpression { left, index } => {
             //     return write!(f, "({})[{}]", left, index);
             // }
-            // Expression::IfExpression {
-            //     condition,
-            //     consequence,
-            //     alternative,
-            // } => match alternative {
-            //     Some(alt) => return write!(f, "if ({}) {} else {}", condition, consequence, alt),
-            //     None => return write!(f, "if ({}) {}", condition, consequence),
-            // },
+            Expression::IfExpression {
+                condition,
+                consequence,
+                alternative,
+            } => match alternative {
+                Some(alt) => return write!(f, "if ({}) {} else {}", condition, consequence, alt),
+                None => return write!(f, "if ({}) {}", condition, consequence),
+            },
             // Expression::WhileExpression {
             //     condition,
             //     consequence,
@@ -217,7 +217,7 @@ impl fmt::Display for Expression {
             //     s += " }";
             //     return write!(f, "{}", s);
             // }
-            // Expression::NeedNext => return write!(f, ""),
+            Expression::NeedNext => return write!(f, ""),
         }
     }
 }

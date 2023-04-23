@@ -156,33 +156,33 @@ impl Parser {
         }
     }
 
-    // fn parse_block_statement(&mut self) -> Option<ast::Statement> {
-    //     let mut statements = Vec::new();
+    fn parse_block_statement(&mut self) -> Option<ast::Statement> {
+        let mut statements = Vec::new();
 
-    //     self.next_token();
+        self.next_token();
 
-    //     while !self.cur_token_is(&token::TokenType::RBRACE)
-    //         && !self.cur_token_is(&token::TokenType::EOF)
-    //     {
-    //         if let Some(stmt) = self.parse_statement() {
-    //             statements.push(stmt);
-    //         }
-    //         self.next_token();
-    //     }
+        while !self.cur_token_is(&token::TokenType::RBRACE)
+            && !self.cur_token_is(&token::TokenType::EOF)
+        {
+            if let Some(stmt) = self.parse_statement() {
+                statements.push(stmt);
+            }
+            self.next_token();
+        }
 
-    //     if self.cur_token_is(&token::TokenType::EOF) {
-    //         return None;
-    //     }
+        if self.cur_token_is(&token::TokenType::EOF) {
+            return None;
+        }
 
-    //     return Some(ast::Statement::BlockStatement { statements });
-    // }
+        return Some(ast::Statement::BlockStatement { statements });
+    }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<ast::Expression> {
         if let Some(left_exp) = self.parse_prefix_expression_fns() {
             let mut left = Box::new(left_exp);
-            while
-            // !self.peek_token_is(&token::TokenType::SEMICOLON) &&
-            precedence < self.peek_precedence() {
+            while !self.peek_token_is(&token::TokenType::SEMICOLON)
+                && precedence < self.peek_precedence()
+            {
                 self.next_token();
                 if let Some(left_exp_new) = self.parse_infix_expression_fns(left.clone()) {
                     left = Box::new(left_exp_new);
@@ -209,7 +209,7 @@ impl Parser {
             // token::TokenType::FALSE => return Some(self.parse_boolean()),
             token::TokenType::LPAREN => return self.parse_grouped_expression(),
             // token::TokenType::LBRACKET => return self.parse_array_literal(),
-            // token::TokenType::IF => return self.parse_if_expression(),
+            token::TokenType::IF => return self.parse_if_expression(),
             // token::TokenType::WHILE => return self.parse_while_expression(),
             // token::TokenType::FUNCTION => return self.parse_function_literal(),
             // token::TokenType::LBRACE => return self.parse_hash_literal(),
@@ -342,56 +342,56 @@ impl Parser {
     //     };
     // }
 
-    // fn parse_if_expression(&mut self) -> Option<ast::Expression> {
-    //     if !self.expect_peek(token::TokenType::LPAREN) {
-    //         return None;
-    //     }
+    fn parse_if_expression(&mut self) -> Option<ast::Expression> {
+        if !self.expect_peek(token::TokenType::LPAREN) {
+            return None;
+        }
 
-    //     self.next_token();
-    //     match self.parse_expression(Precedence::LOWEST) {
-    //         Some(condition) => {
-    //             if !self.expect_peek(token::TokenType::RPAREN) {
-    //                 return None;
-    //             }
-    //             if !self.expect_peek(token::TokenType::LBRACE) {
-    //                 return None;
-    //             }
+        self.next_token();
+        match self.parse_expression(Precedence::LOWEST) {
+            Some(condition) => {
+                if !self.expect_peek(token::TokenType::RPAREN) {
+                    return None;
+                }
+                if !self.expect_peek(token::TokenType::LBRACE) {
+                    return None;
+                }
 
-    //             match self.parse_block_statement() {
-    //                 Some(consequence) => {
-    //                     if self.peek_token_is(&token::TokenType::ELSE) {
-    //                         self.next_token();
+                match self.parse_block_statement() {
+                    Some(consequence) => {
+                        if self.peek_token_is(&token::TokenType::ELSE) {
+                            self.next_token();
 
-    //                         if !self.expect_peek(token::TokenType::LBRACE) {
-    //                             return None;
-    //                         }
+                            if !self.expect_peek(token::TokenType::LBRACE) {
+                                return None;
+                            }
 
-    //                         match self.parse_block_statement() {
-    //                             Some(alternative) => {
-    //                                 let expression = ast::Expression::IfExpression {
-    //                                     condition: Box::new(condition),
-    //                                     consequence: Box::new(consequence),
-    //                                     alternative: Some(Box::new(alternative)),
-    //                                 };
-    //                                 return Some(expression);
-    //                             }
-    //                             None => return Some(ast::Expression::NeedNext),
-    //                         }
-    //                     }
+                            match self.parse_block_statement() {
+                                Some(alternative) => {
+                                    let expression = ast::Expression::IfExpression {
+                                        condition: Box::new(condition),
+                                        consequence: Box::new(consequence),
+                                        alternative: Some(Box::new(alternative)),
+                                    };
+                                    return Some(expression);
+                                }
+                                None => return Some(ast::Expression::NeedNext),
+                            }
+                        }
 
-    //                     let expression = ast::Expression::IfExpression {
-    //                         condition: Box::new(condition),
-    //                         consequence: Box::new(consequence),
-    //                         alternative: None,
-    //                     };
-    //                     return Some(expression);
-    //                 }
-    //                 None => return Some(ast::Expression::NeedNext),
-    //             }
-    //         }
-    //         None => return None,
-    //     }
-    // }
+                        let expression = ast::Expression::IfExpression {
+                            condition: Box::new(condition),
+                            consequence: Box::new(consequence),
+                            alternative: None,
+                        };
+                        return Some(expression);
+                    }
+                    None => return Some(ast::Expression::NeedNext),
+                }
+            }
+            None => return None,
+        }
+    }
 
     // fn parse_while_expression(&mut self) -> Option<ast::Expression> {
     //     if !self.expect_peek(token::TokenType::LPAREN) {

@@ -83,9 +83,9 @@ impl Compiler {
             ast::Statement::ExpressionStatement { expression } => {
                 return self.compile_expression(expression)
             }
-            // ast::Statement::BlockStatement { statements } => {
-            //     return self.eval_block_statement(statements)
-            // }
+            ast::Statement::BlockStatement { statements } => {
+                return self.compile_block_statement(statements)
+            }
         }
     }
 
@@ -186,11 +186,11 @@ impl Compiler {
 
             //     return Evaluator::eval_index_expression(left, index);
             // }
-            // ast::Expression::IfExpression {
-            //     condition,
-            //     consequence,
-            //     alternative,
-            // } => return self.eval_if_expression(condition, consequence, alternative),
+            ast::Expression::IfExpression {
+                condition,
+                consequence,
+                alternative,
+            } => return self.compile_if_expression(condition, consequence, alternative),
             // ast::Expression::WhileExpression {
             //     condition,
             //     consequence,
@@ -240,7 +240,7 @@ impl Compiler {
 
             //     Some(Rc::new(object::Object::Hash(hash)))
             // }
-            // ast::Expression::NeedNext => return None,
+            ast::Expression::NeedNext => return None,
         }
     }
 
@@ -572,27 +572,54 @@ impl Compiler {
     //     }
     // }
 
-    // fn eval_if_expression(
-    //     &mut self,
-    //     condition: Box<ast::Expression>,
-    //     consequence: Box<ast::Statement>,
-    //     alternative: Option<Box<ast::Statement>>,
-    // ) -> Option<Rc<object::Object>> {
-    //     if let Some(evaluated_condition) = self.eval_expression(*condition) {
-    //         if Evaluator::is_error(&evaluated_condition) {
-    //             return Some(evaluated_condition);
-    //         }
-    //         if Evaluator::is_truthy(evaluated_condition) {
-    //             return self.eval_statement(*consequence);
-    //         } else if let Some(alt) = alternative {
-    //             return self.eval_statement(*alt);
-    //         } else {
-    //             return Some(Rc::new(object::NULL));
-    //         }
-    //     } else {
-    //         return None;
-    //     }
-    // }
+    fn compile_if_expression(
+        &mut self,
+        condition: Box<ast::Expression>,
+        consequence: Box<ast::Statement>,
+        alternative: Option<Box<ast::Statement>>,
+    ) -> Option<String> {
+        let mut asm = String::new();
+
+        if let Some(result) = self.compile_expression(*condition) {
+            asm += &result;
+            asm += &format!("  pop rax\n");
+            asm += &format!("  cmp rax, 0\n");
+
+            let label_count = self.env.label_count;
+            self.env.label_count += 1;
+
+            if let Some(alternative) = alternative {
+                asm += &format!("  je .Lelse{}\n", label_count);
+                if let Some(result) = self.compile_statement(*consequence) {
+                    asm += &result;
+                    asm += &format!("  push rax\n");
+                }
+
+                asm += &format!("  jmp .Lend{}\n", label_count);
+                asm += &format!(".Lelse{}:\n", label_count);
+
+                if let Some(result) = self.compile_statement(*alternative) {
+                    asm += &result;
+                    asm += &format!("  push rax\n");
+                }
+            } else {
+                asm += &format!("  je .Lend{}\n", label_count);
+                
+                if let Some(result) = self.compile_statement(*consequence) {
+                    asm += &result;
+                    asm += &format!("  push rax\n");
+                }
+            }
+
+
+
+            asm += &format!(".Lend{}:\n", label_count);
+
+            return Some(asm);
+        } else {
+            return None;
+        }
+    }
 
     // fn eval_while_expression(
     //     &mut self,
