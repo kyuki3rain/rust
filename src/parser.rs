@@ -210,7 +210,7 @@ impl Parser {
             token::TokenType::LPAREN => return self.parse_grouped_expression(),
             // token::TokenType::LBRACKET => return self.parse_array_literal(),
             token::TokenType::IF => return self.parse_if_expression(),
-            // token::TokenType::WHILE => return self.parse_while_expression(),
+            token::TokenType::WHILE => return self.parse_while_expression(),
             // token::TokenType::FUNCTION => return self.parse_function_literal(),
             // token::TokenType::LBRACE => return self.parse_hash_literal(),
             _ => return None,
@@ -393,35 +393,35 @@ impl Parser {
         }
     }
 
-    // fn parse_while_expression(&mut self) -> Option<ast::Expression> {
-    //     if !self.expect_peek(token::TokenType::LPAREN) {
-    //         return None;
-    //     }
+    fn parse_while_expression(&mut self) -> Option<ast::Expression> {
+        if !self.expect_peek(token::TokenType::LPAREN) {
+            return None;
+        }
 
-    //     self.next_token();
-    //     match self.parse_expression(Precedence::LOWEST) {
-    //         Some(condition) => {
-    //             if !self.expect_peek(token::TokenType::RPAREN) {
-    //                 return None;
-    //             }
-    //             if !self.expect_peek(token::TokenType::LBRACE) {
-    //                 return None;
-    //             }
+        self.next_token();
+        match self.parse_expression(Precedence::LOWEST) {
+            Some(condition) => {
+                if !self.expect_peek(token::TokenType::RPAREN) {
+                    return None;
+                }
+                if !self.expect_peek(token::TokenType::LBRACE) {
+                    return None;
+                }
 
-    //             match self.parse_block_statement() {
-    //                 Some(consequence) => {
-    //                     let expression = ast::Expression::WhileExpression {
-    //                         condition: Box::new(condition),
-    //                         consequence: Box::new(consequence),
-    //                     };
-    //                     return Some(expression);
-    //                 }
-    //                 None => return Some(ast::Expression::NeedNext),
-    //             }
-    //         }
-    //         None => return None,
-    //     }
-    // }
+                match self.parse_block_statement() {
+                    Some(consequence) => {
+                        let expression = ast::Expression::WhileExpression {
+                            condition: Box::new(condition),
+                            consequence: Box::new(consequence),
+                        };
+                        return Some(expression);
+                    }
+                    None => return Some(ast::Expression::NeedNext),
+                }
+            }
+            None => return None,
+        }
+    }
 
     // fn parse_function_literal(&mut self) -> Option<ast::Expression> {
     //     if !self.expect_peek(token::TokenType::LPAREN) {

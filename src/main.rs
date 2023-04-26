@@ -204,4 +204,11 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 8);
     }
+
+    #[test]
+    fn test_while() {
+        let program = "a = 0; while(a < 10) { a = a + 1; } a";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 10);
+    }
 }

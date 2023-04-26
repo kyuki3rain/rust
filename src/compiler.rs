@@ -191,10 +191,10 @@ impl Compiler {
                 consequence,
                 alternative,
             } => return self.compile_if_expression(condition, consequence, alternative),
-            // ast::Expression::WhileExpression {
-            //     condition,
-            //     consequence,
-            // } => return self.eval_while_expression(condition, consequence),
+            ast::Expression::WhileExpression {
+                condition,
+                consequence,
+            } => return self.compile_while_expression(condition, consequence),
             // ast::Expression::FunctionLiteral { parameters, body } => {
             //     return Some(Rc::new(object::Object::Function {
             //         parameters,
@@ -621,41 +621,34 @@ impl Compiler {
         }
     }
 
-    // fn eval_while_expression(
-    //     &mut self,
-    //     condition: Box<ast::Expression>,
-    //     consequence: Box<ast::Statement>,
-    // ) -> Option<Rc<object::Object>> {
-    //     let mut object = Rc::new(object::NULL);
-    //     loop {
-    //         if let Some(evaluated_condition) = self.eval_expression(*condition.clone()) {
-    //             if Evaluator::is_error(&evaluated_condition) {
-    //                 return Some(evaluated_condition);
-    //             }
-    //             if !Evaluator::is_truthy(evaluated_condition) {
-    //                 break;
-    //             }
+    fn compile_while_expression(
+        &mut self,
+        condition: Box<ast::Expression>,
+        consequence: Box<ast::Statement>,
+    ) -> Option<String> {
+        let mut asm = String::new();
 
-    //             object = match self.eval_statement(*consequence.clone()) {
-    //                 Some(obj) => match &*obj {
-    //                     object::Object::Return(_) => return Some(Rc::clone(&obj)),
-    //                     _ => obj,
-    //                 },
-    //                 _ => {
-    //                     return None;
-    //                 }
-    //             };
+        let label_count = self.env.label_count;
+        self.env.label_count += 1;
+        asm += &format!(".Lbegin{}:\n", label_count);
+        
+        if let Some(result) = self.compile_expression(*condition.clone()) {
+            asm += &result;
+            asm += &format!("  pop rax\n");
+            asm += &format!("  cmp rax, 0\n");
+            asm += &format!("  je .Lend{}\n", label_count);
 
-    //             if Evaluator::is_error(&object) {
-    //                 return Some(object);
-    //             }
-    //         } else {
-    //             return None;
-    //         }
-    //     }
+            if let Some(result) = self.compile_statement(*consequence) {
+                asm += &result;
+                asm += &format!("  push rax\n");
+            }
 
-    //     return Some(object);
-    // }
+            asm += &format!("  jmp .Lbegin{}\n", label_count);
+            asm += &format!(".Lend{}:\n", label_count);
+        }
+
+        return Some(asm);
+    }
 
     fn compile_identifier(&mut self, ident: String) -> Option<String> {
         if let Some(variable) = self.env.get(&ident) {

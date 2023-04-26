@@ -107,10 +107,10 @@ pub enum Expression {
         consequence: Box<Statement>,
         alternative: Option<Box<Statement>>,
     },
-    // WhileExpression {
-    //     condition: Box<Expression>,
-    //     consequence: Box<Statement>,
-    // },
+    WhileExpression {
+        condition: Box<Expression>,
+        consequence: Box<Statement>,
+    },
     // FunctionLiteral {
     //     parameters: Vec<Expression>,
     //     body: Box<Statement>,
@@ -176,10 +176,10 @@ impl fmt::Display for Expression {
                 Some(alt) => return write!(f, "if ({}) {} else {}", condition, consequence, alt),
                 None => return write!(f, "if ({}) {}", condition, consequence),
             },
-            // Expression::WhileExpression {
-            //     condition,
-            //     consequence,
-            // } => return write!(f, "while ({}) {}", condition, consequence),
+            Expression::WhileExpression {
+                condition,
+                consequence,
+            } => return write!(f, "while ({}) {}", condition, consequence),
             // Expression::FunctionLiteral { parameters, body } => {
             //     let mut s = "".to_string();
             //     for (i, p) in parameters.iter().enumerate() {
