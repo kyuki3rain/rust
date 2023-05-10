@@ -1,9 +1,9 @@
 use crate::{ast::Expression, environment};
 
 use super::ast;
-// use std::cell::RefCell;
+use std::cell::RefCell;
+use std::rc::Rc;
 // use std::collections::HashMap;
-// use std::rc::Rc;
 
 enum Status {
     DEFAULT,
@@ -11,16 +11,16 @@ enum Status {
 }
 
 pub struct Compiler {
-    env: environment::Environment,
+    env: Rc<RefCell<environment::Environment>>,
     status: Status,
 }
 
 impl Compiler {
     pub fn new() -> Self {
-        return Compiler {
-            env: environment::Environment::new(),
+        Compiler {
+            env: Rc::new(RefCell::new(environment::Environment::new(0, 0, 0))),
             status: Status::DEFAULT,
-        };
+        }
     }
 
     pub fn compile_program(&mut self, program: ast::Program) -> Option<String> {
@@ -46,6 +46,10 @@ impl Compiler {
 
     fn compile_block_statement(&mut self, statements: Vec<ast::Statement>) -> Option<String> {
         let mut asm = String::new();
+        self.env = Rc::new(RefCell::new(environment::Environment::new_block_env(
+            Rc::clone(&self.env),
+        )));
+
         for stmt in statements {
             if let Some(result) = self.compile_statement(stmt) {
                 asm += &result;
@@ -57,6 +61,10 @@ impl Compiler {
                 }
             }
         }
+
+        let outer = Rc::clone(self.env.borrow_mut().outer.as_ref().unwrap());
+        self.env = outer;
+
         return Some(asm);
     }
 
@@ -140,18 +148,18 @@ impl Compiler {
                     Some(right_evaluated) => match *left {
                         ast::Expression::Identifier { value } => {
                             asm += &format!("# {}\n", value);
-                            if !self.env.contains_key(&value) {
-                                self.env.set(&value);
+                            if !self.env.borrow().contains_key(&value) {
+                                self.env.borrow_mut().set(&value);
                                 asm += &format!("  sub rsp, {}\n", 8);
                             }
 
-                            if let Some(variable) = self.env.get(&value) {
+                            if let Some(variable) = self.env.borrow().get_var(&value) {
                                 asm += &format!("  mov rax, rbp\n");
                                 asm += &format!("  sub rax, {}\n", variable.offset);
                                 asm += &format!("  push rax\n");
-                                
+
                                 asm += &right_evaluated;
-    
+
                                 asm += &format!("  pop rdi\n");
                                 asm += &format!("  pop rax\n");
                                 asm += &format!("  mov [rax], rdi\n");
@@ -585,8 +593,7 @@ impl Compiler {
             asm += &format!("  pop rax\n");
             asm += &format!("  cmp rax, 0\n");
 
-            let label_count = self.env.label_count;
-            self.env.label_count += 1;
+            let label_count = self.env.borrow_mut().inc_label_count() - 1;
 
             if let Some(alternative) = alternative {
                 asm += &format!("  je .Lelse{}\n", label_count);
@@ -604,14 +611,12 @@ impl Compiler {
                 }
             } else {
                 asm += &format!("  je .Lend{}\n", label_count);
-                
+
                 if let Some(result) = self.compile_statement(*consequence) {
                     asm += &result;
                     asm += &format!("  push rax\n");
                 }
             }
-
-
 
             asm += &format!(".Lend{}:\n", label_count);
 
@@ -628,10 +633,9 @@ impl Compiler {
     ) -> Option<String> {
         let mut asm = String::new();
 
-        let label_count = self.env.label_count;
-        self.env.label_count += 1;
+        let label_count = self.env.borrow_mut().inc_label_count() - 1;
         asm += &format!(".Lbegin{}:\n", label_count);
-        
+
         if let Some(result) = self.compile_expression(*condition.clone()) {
             asm += &result;
             asm += &format!("  pop rax\n");
@@ -651,7 +655,7 @@ impl Compiler {
     }
 
     fn compile_identifier(&mut self, ident: String) -> Option<String> {
-        if let Some(variable) = self.env.get(&ident) {
+        if let Some(variable) = self.env.borrow().get_var(&ident) {
             let mut asm = String::new();
             asm += &format!("  mov rax, rbp\n");
             asm += &format!("  sub rax, {}\n", variable.offset);

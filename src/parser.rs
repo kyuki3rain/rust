@@ -95,6 +95,7 @@ impl Parser {
     fn parse_statement(&mut self) -> Option<ast::Statement> {
         match self.cur_token.token_type {
             // token::TokenType::LET => return self.parse_let_statement(),
+            token::TokenType::LBRACE => return self.parse_block_statement(),
             token::TokenType::RETURN => return self.parse_return_statement(),
             _ => return self.parse_expression_statement(),
         }

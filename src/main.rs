@@ -1,10 +1,10 @@
 use std::env;
 mod ast;
 mod compiler;
+mod environment;
 mod lexer;
 mod parser;
 mod token;
-mod environment;
 
 // c-compiler
 fn main() {
@@ -17,6 +17,7 @@ fn main() {
     let l = lexer::Lexer::new(&args[1]);
     let mut p = parser::Parser::new(l);
     let program = p.parse_program();
+    // println!("Program: {}", program);
 
     let asm = compiler::Compiler::new().compile_program(program).unwrap();
 
@@ -172,7 +173,7 @@ mod test {
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 40);
     }
-    
+
     #[test]
     fn test_ident() {
         let program = "a = 10; a + 10";
@@ -210,5 +211,12 @@ mod test {
         let program = "a = 0; while(a < 10) { a = a + 1; } a";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 10);
+    }
+
+    #[test]
+    fn test_block() {
+        let program = "a = 0; b = 5; { b = 10; } a + b";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 5);
     }
 }
