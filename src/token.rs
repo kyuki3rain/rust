@@ -3,36 +3,33 @@ use std::fmt;
 #[allow(dead_code)]
 #[derive(PartialOrd, PartialEq, Debug, Clone, Eq, Hash)]
 pub enum TokenType {
-    ILLEGAL,
-    EOF,
+    Illegal,
+    EoF,
 
-    IDENT, // add, foobar, x, y, ...
-    INT, // 1343456
+    Ident, // add, foobar, x, y, ...
+    Int,   // 1343456
     // STRING, // "hello world"
-
-    ASSIGN, // =
-    PLUS, // +
-    MINUS, // -
-    ASTERISK, // *
-    SLASH, // /
+    Assign,   // =
+    Plus,     // +
+    Minus,    // -
+    Asterisk, // *
+    Slash,    // /
     // BANG, // !
-
-    LT, // <
-    GT, // >
-    EQ, // ==
-    NOTEQ, // !=
-    LTEQ, // <=
-    GTEQ, // >=
+    Lt,    // <
+    Gt,    // >
+    Eq,    // ==
+    NotEq, // !=
+    LtEq,  // <=
+    GtEq,  // >=
 
     // COMMA, // ,
-    SEMICOLON, // ;
+    SemiColon, // ;
     // COLON, // :
     // DOT, // .
-
-    LPAREN, // (
-    RPAREN, // )
-    LBRACE, // {
-    RBRACE, // }
+    LParen, // (
+    RPren,  // )
+    LBrace, // {
+    RBrace, // }
     // LBRACKET, // [
     // RBRACKET, // ]
 
@@ -40,16 +37,10 @@ pub enum TokenType {
     // LET,     // let
     // TRUE,   // true
     // FALSE, // false
-    IF, // if
-    ELSE, // else
-    RETURN, // return
-    WHILE, // while
-}
-
-impl fmt::Display for TokenType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self)
-    }
+    If,     // if
+    Else,   // else
+    Return, // return
+    While,  // while
 }
 
 #[derive(Clone)]
@@ -74,17 +65,17 @@ pub fn lookup_ident(ident: &str) -> TokenType {
         // "let" => TokenType::LET,
         // "true" => TokenType::TRUE,
         // "false" => TokenType::FALSE,
-        "if" => TokenType::IF,
-        "else" => TokenType::ELSE,
-        "return" => TokenType::RETURN,
-        "while" => TokenType::WHILE,
-        _ => TokenType::IDENT,
+        "if" => TokenType::If,
+        "else" => TokenType::Else,
+        "return" => TokenType::Return,
+        "while" => TokenType::While,
+        _ => TokenType::Ident,
     }
 }
 
 pub fn new_token(token_type: TokenType, literal: String) -> Token {
-    return Token {
+    Token {
         token_type,
-        literal: literal,
-    };
+        literal,
+    }
 }

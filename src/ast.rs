@@ -22,25 +22,25 @@ impl fmt::Display for Program {
             s += &format!("{}\r\n", stmt);
         }
 
-        return write!(f, "{}", s);
+        write!(f, "{}", s)
     }
 }
 
 #[derive(Clone, PartialEq)]
 pub enum Statement {
-    // LetStatement { name: Expression, value: Expression },
-    ReturnStatement { return_value: Expression },
-    ExpressionStatement { expression: Expression },
-    BlockStatement { statements: Vec<Statement> },
+    // Let { name: Expression, value: Expression },
+    Return { return_value: Expression },
+    Expression { expression: Expression },
+    Block { statements: Vec<Statement> },
 }
 
 impl Statement {
     // pub fn need_next(&self) -> bool {
     //     match self {
-    //         Statement::LetStatement { name: _, value } => value.need_next(),
-    //         Statement::ReturnStatement { return_value } => return_value.need_next(),
-    //         Statement::ExpressionStatement { expression } => expression.need_next(),
-    //         Statement::BlockStatement { statements } => {
+    //         Statement::Let { name: _, value } => value.need_next(),
+    //         Statement::Return { return_value } => return_value.need_next(),
+    //         Statement::Expression { expression } => expression.need_next(),
+    //         Statement::Block { statements } => {
     //             statements.iter().any(|statement| statement.need_next())
     //         }
     //     }
@@ -50,19 +50,19 @@ impl Statement {
 impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            // Statement::LetStatement { name, value } => {
+            // Statement::Let { name, value } => {
             //     return write!(f, "let {} = {};", name, value)
             // }
-            Statement::ReturnStatement { return_value } => {
-                return write!(f, "return {};", return_value);
+            Statement::Return { return_value } => {
+                write!(f, "return {};", return_value)
             }
-            Statement::ExpressionStatement { expression } => return write!(f, "{}", expression),
-            Statement::BlockStatement { statements } => {
+            Statement::Expression { expression } => write!(f, "{}", expression),
+            Statement::Block { statements } => {
                 let mut s = "".to_string();
                 for stmt in statements {
                     s += &format!("\t{}\r\n", stmt);
                 }
-                return write!(f, "{{\r\n{}}}", s);
+                write!(f, "{{\r\n{}}}", s)
             }
         }
     }
@@ -137,21 +137,19 @@ impl Expression {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expression::Identifier { value } => return write!(f, "{}", value),
-            Expression::IntegerLiteral { value } => return write!(f, "{}", value),
-            // Expression::StringLiteral { value } => return write!(f, "\"{}\"", value),
+            Expression::Identifier { value } => write!(f, "{}", value),
+            Expression::IntegerLiteral { value } => write!(f, "{}", value),
+            // Expression::StringLiteral { value } => write!(f, "\"{}\"", value),
             Expression::PrefixExpression { operator, right } => {
-                return write!(f, "({}{})", operator, right);
+                write!(f, "({}{})", operator, right)
             }
             Expression::InfixExpression {
                 left,
                 operator,
                 right,
-            } => {
-                return write!(f, "({} {} {})", left, operator, right);
-            }
+            } => write!(f, "({} {} {})", left, operator, right),
             Expression::AssignExpression { left, right } => {
-                return write!(f, "{} = {}", left, right);
+                write!(f, "{} = {}", left, right)
             }
             // Expression::Boolean { value } => return write!(f, "{}", value),
             // Expression::ArrayLiteral { elements } => {
@@ -173,13 +171,13 @@ impl fmt::Display for Expression {
                 consequence,
                 alternative,
             } => match alternative {
-                Some(alt) => return write!(f, "if ({}) {} else {}", condition, consequence, alt),
-                None => return write!(f, "if ({}) {}", condition, consequence),
+                Some(alt) => write!(f, "if ({}) {} else {}", condition, consequence, alt),
+                None => write!(f, "if ({}) {}", condition, consequence),
             },
             Expression::WhileExpression {
                 condition,
                 consequence,
-            } => return write!(f, "while ({}) {}", condition, consequence),
+            } => write!(f, "while ({}) {}", condition, consequence),
             // Expression::FunctionLiteral { parameters, body } => {
             //     let mut s = "".to_string();
             //     for (i, p) in parameters.iter().enumerate() {
@@ -217,7 +215,7 @@ impl fmt::Display for Expression {
             //     s += " }";
             //     return write!(f, "{}", s);
             // }
-            Expression::NeedNext => return write!(f, ""),
+            Expression::NeedNext => write!(f, ""),
         }
     }
 }
@@ -229,7 +227,7 @@ impl fmt::Display for Expression {
 //     #[test]
 //     fn test_string() {
 //         let program = Program {
-//             statements: vec![Statement::LetStatement {
+//             statements: vec![Statement::Let {
 //                 name: Expression::Identifier {
 //                     value: "myVar".to_string(),
 //                 },

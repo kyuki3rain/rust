@@ -23,18 +23,18 @@ impl Environment {
         }
     }
 
-    pub fn get_var(&self, name: &str) -> Option<Rc<Variable>> {
+    pub fn get(&self, name: &str) -> Option<Rc<Variable>> {
         let stack = self.stack;
-        self.get(name, stack)
+        self.get_with_stack(name, stack)
     }
 
-    pub fn get(&self, name: &str, stack: usize) -> Option<Rc<Variable>> {
+    pub fn get_with_stack(&self, name: &str, stack: usize) -> Option<Rc<Variable>> {
         match self.store.get(name) {
             Some(value) => Some(Rc::clone(value)),
             None => match &self.outer {
                 Some(out_env) => {
                     if out_env.borrow().stack == stack {
-                        out_env.borrow_mut().get(name, stack)
+                        out_env.borrow_mut().get_with_stack(name, stack)
                     } else {
                         None
                     }
@@ -73,9 +73,9 @@ impl Environment {
         env
     }
 
-    pub fn new_fn_env(outer: Rc<RefCell<Environment>>) -> Environment {
-        let mut env = Environment::new(0, outer.borrow().stack + 1, outer.borrow().label_count);
-        env.outer = Some(outer);
-        env
-    }
+    // pub fn new_fn_env(outer: Rc<RefCell<Environment>>) -> Environment {
+    //     let mut env = Environment::new(0, outer.borrow().stack + 1, outer.borrow().label_count);
+    //     env.outer = Some(outer);
+    //     env
+    // }
 }

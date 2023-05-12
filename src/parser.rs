@@ -5,36 +5,36 @@ use super::{ast, lexer, token};
 #[allow(dead_code)]
 #[derive(PartialEq, PartialOrd, Debug)]
 pub enum Precedence {
-    LOWEST,
-    ASSIGN,
-    EQUALS,
-    LESSGREATER,
-    SUM,
-    PRODUCT,
-    PREFIX,
-    DOT,
-    CALL,
-    INDEX,
+    Lowest,
+    Assign,
+    Equals,
+    LessGreater,
+    Sum,
+    Product,
+    Prefix,
+    Dot,
+    Call,
+    Index,
 }
 
 #[allow(dead_code)]
 pub fn token_type_to_precedence(t: &token::TokenType) -> Precedence {
     match t {
-        token::TokenType::ASSIGN => return Precedence::ASSIGN,
-        token::TokenType::EQ => return Precedence::EQUALS,
-        token::TokenType::NOTEQ => return Precedence::EQUALS,
-        token::TokenType::LTEQ => return Precedence::LESSGREATER,
-        token::TokenType::GTEQ => return Precedence::LESSGREATER,
-        token::TokenType::LT => return Precedence::LESSGREATER,
-        token::TokenType::GT => return Precedence::LESSGREATER,
-        token::TokenType::PLUS => return Precedence::SUM,
-        token::TokenType::MINUS => return Precedence::SUM,
-        token::TokenType::SLASH => return Precedence::PRODUCT,
-        token::TokenType::ASTERISK => return Precedence::PRODUCT,
-        // token::TokenType::DOT => return Precedence::DOT,
-        // token::TokenType::LPAREN => return Precedence::CALL,
-        // token::TokenType::LBRACKET => return Precedence::INDEX,
-        _ => return Precedence::LOWEST,
+        token::TokenType::Assign => Precedence::Assign,
+        token::TokenType::Eq => Precedence::Equals,
+        token::TokenType::NotEq => Precedence::Equals,
+        token::TokenType::LtEq => Precedence::LessGreater,
+        token::TokenType::GtEq => Precedence::LessGreater,
+        token::TokenType::Lt => Precedence::LessGreater,
+        token::TokenType::Gt => Precedence::LessGreater,
+        token::TokenType::Plus => Precedence::Sum,
+        token::TokenType::Minus => Precedence::Sum,
+        token::TokenType::Slash => Precedence::Product,
+        token::TokenType::Asterisk => Precedence::Product,
+        // token::TokenType::DOT => Precedence::DOT,
+        // token::TokenType::LPAREN => Precedence::CALL,
+        // token::TokenType::LBRACKET => Precedence::INDEX,
+        _ => Precedence::Lowest,
     }
 }
 
@@ -50,13 +50,13 @@ pub struct Parser {
 impl Parser {
     pub fn new(l: lexer::Lexer) -> Parser {
         let mut p = Parser {
-            l: l,
+            l,
             cur_token: Rc::new(token::Token {
-                token_type: token::TokenType::ILLEGAL,
+                token_type: token::TokenType::Illegal,
                 literal: "".to_string(),
             }),
             peek_token: Rc::new(token::Token {
-                token_type: token::TokenType::ILLEGAL,
+                token_type: token::TokenType::Illegal,
                 literal: "".to_string(),
             }),
             errors: Vec::new(),
@@ -65,14 +65,14 @@ impl Parser {
         p.next_token();
         p.next_token();
 
-        return p;
+        p
     }
 
     fn peek_error(&mut self, t: token::TokenType) {
-        self.errors.push(String::from(format!(
+        self.errors.push(format!(
             "\r\nexpected next token to be {:?}, got {:?} instead.",
             t, self.peek_token.token_type
-        )))
+        ))
     }
 
     fn next_token(&mut self) {
@@ -84,20 +84,21 @@ impl Parser {
         let mut program = ast::Program {
             statements: Vec::new(),
         };
-        while self.cur_token.token_type != token::TokenType::EOF {
+        while self.cur_token.token_type != token::TokenType::EoF {
             if let Some(stmt) = self.parse_statement() {
                 program.statements.push(stmt);
             }
             self.next_token();
         }
-        return program;
+
+        program
     }
     fn parse_statement(&mut self) -> Option<ast::Statement> {
         match self.cur_token.token_type {
             // token::TokenType::LET => return self.parse_let_statement(),
-            token::TokenType::LBRACE => return self.parse_block_statement(),
-            token::TokenType::RETURN => return self.parse_return_statement(),
-            _ => return self.parse_expression_statement(),
+            token::TokenType::LBrace => self.parse_block_statement(),
+            token::TokenType::Return => self.parse_return_statement(),
+            _ => self.parse_expression_statement(),
         }
     }
     // fn parse_let_statement(&mut self) -> Option<ast::Statement> {
@@ -114,7 +115,7 @@ impl Parser {
     //     self.next_token();
 
     //     if let Some(expression) = self.parse_expression(Precedence::LOWEST) {
-    //         let stmt = ast::Statement::LetStatement {
+    //         let stmt = ast::Statement::Let {
     //             name,
     //             value: expression,
     //         };
@@ -130,30 +131,28 @@ impl Parser {
     fn parse_return_statement(&mut self) -> Option<ast::Statement> {
         self.next_token();
 
-        if let Some(expression) = self.parse_expression(Precedence::LOWEST) {
-            let stmt = ast::Statement::ReturnStatement {
+        if let Some(expression) = self.parse_expression(Precedence::Lowest) {
+            let stmt = ast::Statement::Return {
                 return_value: expression,
             };
-            if self.peek_token_is(&token::TokenType::SEMICOLON) {
+            if self.peek_token_is(&token::TokenType::SemiColon) {
                 self.next_token();
             }
-            return Some(stmt);
+            Some(stmt)
         } else {
-            return None;
+            None
         }
     }
 
     fn parse_expression_statement(&mut self) -> Option<ast::Statement> {
-        if let Some(expression) = self.parse_expression(Precedence::LOWEST) {
-            let stmt = ast::Statement::ExpressionStatement {
-                expression: expression,
-            };
-            if self.peek_token_is(&token::TokenType::SEMICOLON) {
+        if let Some(expression) = self.parse_expression(Precedence::Lowest) {
+            let stmt = ast::Statement::Expression { expression };
+            if self.peek_token_is(&token::TokenType::SemiColon) {
                 self.next_token();
             }
-            return Some(stmt);
+            Some(stmt)
         } else {
-            return None;
+            None
         }
     }
 
@@ -162,8 +161,8 @@ impl Parser {
 
         self.next_token();
 
-        while !self.cur_token_is(&token::TokenType::RBRACE)
-            && !self.cur_token_is(&token::TokenType::EOF)
+        while !self.cur_token_is(&token::TokenType::RBrace)
+            && !self.cur_token_is(&token::TokenType::EoF)
         {
             if let Some(stmt) = self.parse_statement() {
                 statements.push(stmt);
@@ -171,17 +170,17 @@ impl Parser {
             self.next_token();
         }
 
-        if self.cur_token_is(&token::TokenType::EOF) {
+        if self.cur_token_is(&token::TokenType::EoF) {
             return None;
         }
 
-        return Some(ast::Statement::BlockStatement { statements });
+        Some(ast::Statement::Block { statements })
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Option<ast::Expression> {
         if let Some(left_exp) = self.parse_prefix_expression_fns() {
             let mut left = Box::new(left_exp);
-            while !self.peek_token_is(&token::TokenType::SEMICOLON)
+            while !self.peek_token_is(&token::TokenType::SemiColon)
                 && precedence < self.peek_precedence()
             {
                 self.next_token();
@@ -192,29 +191,30 @@ impl Parser {
                 }
             }
 
-            return Some(*left);
+            Some(*left)
         } else {
             self.no_prefix_parse_fn_error();
-            return None;
+
+            None
         }
     }
 
     fn parse_prefix_expression_fns(&mut self) -> Option<ast::Expression> {
         match self.cur_token.token_type {
-            token::TokenType::IDENT => return Some(self.parse_identifier()),
-            token::TokenType::INT => return self.parse_integer_literal(),
-            // token::TokenType::STRING => return self.parse_string_literal(),
-            // token::TokenType::BANG => return self.parse_prefix_expression(),
-            token::TokenType::MINUS => return self.parse_prefix_expression(),
-            // token::TokenType::TRUE => return Some(self.parse_boolean()),
-            // token::TokenType::FALSE => return Some(self.parse_boolean()),
-            token::TokenType::LPAREN => return self.parse_grouped_expression(),
-            // token::TokenType::LBRACKET => return self.parse_array_literal(),
-            token::TokenType::IF => return self.parse_if_expression(),
-            token::TokenType::WHILE => return self.parse_while_expression(),
-            // token::TokenType::FUNCTION => return self.parse_function_literal(),
-            // token::TokenType::LBRACE => return self.parse_hash_literal(),
-            _ => return None,
+            token::TokenType::Ident => Some(self.parse_identifier()),
+            token::TokenType::Int => self.parse_integer_literal(),
+            // token::TokenType::STRING => self.parse_string_literal(),
+            // token::TokenType::BANG => self.parse_prefix_expression(),
+            token::TokenType::Minus => self.parse_prefix_expression(),
+            // token::TokenType::TRUE => Some(self.parse_boolean()),
+            // token::TokenType::FALSE => Some(self.parse_boolean()),
+            token::TokenType::LParen => self.parse_grouped_expression(),
+            // token::TokenType::LBRACKET => self.parse_array_literal(),
+            token::TokenType::If => self.parse_if_expression(),
+            token::TokenType::While => self.parse_while_expression(),
+            // token::TokenType::FUNCTION => self.parse_function_literal(),
+            // token::TokenType::LBRACE => self.parse_hash_literal(),
+            _ => None,
         }
     }
 
@@ -223,21 +223,21 @@ impl Parser {
         left_exp: Box<ast::Expression>,
     ) -> Option<ast::Expression> {
         match self.cur_token.token_type {
-            token::TokenType::PLUS => return self.parse_infix_expression(left_exp),
-            token::TokenType::MINUS => return self.parse_infix_expression(left_exp),
-            token::TokenType::SLASH => return self.parse_infix_expression(left_exp),
-            token::TokenType::ASTERISK => return self.parse_infix_expression(left_exp),
-            // token::TokenType::DOT => return self.parse_infix_expression(left_exp),
-            token::TokenType::ASSIGN => return self.parse_assign_expression(left_exp),
-            token::TokenType::EQ => return self.parse_infix_expression(left_exp),
-            token::TokenType::NOTEQ => return self.parse_infix_expression(left_exp),
-            token::TokenType::LT => return self.parse_infix_expression(left_exp),
-            token::TokenType::GT => return self.parse_infix_expression(left_exp),
-            token::TokenType::LTEQ => return self.parse_infix_expression(left_exp),
-            token::TokenType::GTEQ => return self.parse_infix_expression(left_exp),
-            // token::TokenType::LPAREN => return self.parse_call_expression(left_exp),
-            // token::TokenType::LBRACKET => return self.parse_index_expression(left_exp),
-            _ => return None,
+            token::TokenType::Plus => self.parse_infix_expression(left_exp),
+            token::TokenType::Minus => self.parse_infix_expression(left_exp),
+            token::TokenType::Slash => self.parse_infix_expression(left_exp),
+            token::TokenType::Asterisk => self.parse_infix_expression(left_exp),
+            // token::TokenType::DOT => self.parse_infix_expression(left_exp),
+            token::TokenType::Assign => self.parse_assign_expression(left_exp),
+            token::TokenType::Eq => self.parse_infix_expression(left_exp),
+            token::TokenType::NotEq => self.parse_infix_expression(left_exp),
+            token::TokenType::Lt => self.parse_infix_expression(left_exp),
+            token::TokenType::Gt => self.parse_infix_expression(left_exp),
+            token::TokenType::LtEq => self.parse_infix_expression(left_exp),
+            token::TokenType::GtEq => self.parse_infix_expression(left_exp),
+            // token::TokenType::LPAREN => self.parse_call_expression(left_exp),
+            // token::TokenType::LBRACKET => self.parse_index_expression(left_exp),
+            _ => None,
         }
     }
 
@@ -261,27 +261,21 @@ impl Parser {
 
         self.next_token();
 
-        if let Some(right) = self.parse_expression(Precedence::PREFIX) {
-            return Some(ast::Expression::PrefixExpression {
+        self.parse_expression(Precedence::Prefix)
+            .map(|right| ast::Expression::PrefixExpression {
                 operator: expression_operator,
                 right: Box::new(right),
-            });
-        } else {
-            return None;
-        }
+            })
     }
 
     fn parse_assign_expression(&mut self, left: Box<ast::Expression>) -> Option<ast::Expression> {
         let precedence = self.cur_precedence();
         self.next_token();
-        if let Some(right) = self.parse_expression(precedence) {
-            return Some(ast::Expression::AssignExpression {
+        self.parse_expression(precedence)
+            .map(|right| ast::Expression::AssignExpression {
                 left,
                 right: Box::new(right),
-            });
-        } else {
-            return None;
-        }
+            })
     }
 
     fn parse_infix_expression(&mut self, left: Box<ast::Expression>) -> Option<ast::Expression> {
@@ -289,15 +283,12 @@ impl Parser {
 
         let precedence = self.cur_precedence();
         self.next_token();
-        if let Some(right) = self.parse_expression(precedence) {
-            return Some(ast::Expression::InfixExpression {
+        self.parse_expression(precedence)
+            .map(|right| ast::Expression::InfixExpression {
                 left,
                 operator,
                 right: Box::new(right),
-            });
-        } else {
-            return None;
-        }
+            })
     }
 
     // fn parse_call_expression(&mut self, function: Box<ast::Expression>) -> Option<ast::Expression> {
@@ -344,26 +335,26 @@ impl Parser {
     // }
 
     fn parse_if_expression(&mut self) -> Option<ast::Expression> {
-        if !self.expect_peek(token::TokenType::LPAREN) {
+        if !self.expect_peek(token::TokenType::LParen) {
             return None;
         }
 
         self.next_token();
-        match self.parse_expression(Precedence::LOWEST) {
+        match self.parse_expression(Precedence::Lowest) {
             Some(condition) => {
-                if !self.expect_peek(token::TokenType::RPAREN) {
+                if !self.expect_peek(token::TokenType::RPren) {
                     return None;
                 }
-                if !self.expect_peek(token::TokenType::LBRACE) {
+                if !self.expect_peek(token::TokenType::LBrace) {
                     return None;
                 }
 
                 match self.parse_block_statement() {
                     Some(consequence) => {
-                        if self.peek_token_is(&token::TokenType::ELSE) {
+                        if self.peek_token_is(&token::TokenType::Else) {
                             self.next_token();
 
-                            if !self.expect_peek(token::TokenType::LBRACE) {
+                            if !self.expect_peek(token::TokenType::LBrace) {
                                 return None;
                             }
 
@@ -385,27 +376,27 @@ impl Parser {
                             consequence: Box::new(consequence),
                             alternative: None,
                         };
-                        return Some(expression);
+                        Some(expression)
                     }
-                    None => return Some(ast::Expression::NeedNext),
+                    None => Some(ast::Expression::NeedNext),
                 }
             }
-            None => return None,
+            None => None,
         }
     }
 
     fn parse_while_expression(&mut self) -> Option<ast::Expression> {
-        if !self.expect_peek(token::TokenType::LPAREN) {
+        if !self.expect_peek(token::TokenType::LParen) {
             return None;
         }
 
         self.next_token();
-        match self.parse_expression(Precedence::LOWEST) {
+        match self.parse_expression(Precedence::Lowest) {
             Some(condition) => {
-                if !self.expect_peek(token::TokenType::RPAREN) {
+                if !self.expect_peek(token::TokenType::RPren) {
                     return None;
                 }
-                if !self.expect_peek(token::TokenType::LBRACE) {
+                if !self.expect_peek(token::TokenType::LBrace) {
                     return None;
                 }
 
@@ -415,12 +406,12 @@ impl Parser {
                             condition: Box::new(condition),
                             consequence: Box::new(consequence),
                         };
-                        return Some(expression);
+                        Some(expression)
                     }
-                    None => return Some(ast::Expression::NeedNext),
+                    None => Some(ast::Expression::NeedNext),
                 }
             }
-            None => return None,
+            None => None,
         }
     }
 
@@ -478,20 +469,21 @@ impl Parser {
     // }
 
     fn parse_identifier(&self) -> ast::Expression {
-        return ast::Expression::Identifier {
+        ast::Expression::Identifier {
             value: self.cur_token.literal.clone(),
-        };
+        }
     }
 
     fn parse_integer_literal(&mut self) -> Option<ast::Expression> {
         if let Ok(value) = self.cur_token.literal.parse::<i64>() {
-            return Some(ast::Expression::IntegerLiteral { value });
+            Some(ast::Expression::IntegerLiteral { value })
         } else {
             self.errors.push(format!(
                 "could not parse {} as integer",
                 self.cur_token.literal
             ));
-            return None;
+
+            None
         }
     }
 
@@ -510,13 +502,13 @@ impl Parser {
     fn parse_grouped_expression(&mut self) -> Option<ast::Expression> {
         self.next_token();
 
-        let exp = self.parse_expression(Precedence::LOWEST);
+        let exp = self.parse_expression(Precedence::Lowest);
 
-        if !self.expect_peek(token::TokenType::RPAREN) {
+        if !self.expect_peek(token::TokenType::RPren) {
             return None;
         }
 
-        return exp;
+        exp
     }
 
     // fn parse_array_literal(&mut self) -> Option<ast::Expression> {
@@ -528,18 +520,20 @@ impl Parser {
     // }
 
     fn cur_token_is(&self, t: &token::TokenType) -> bool {
-        return self.cur_token.token_type == *t;
+        self.cur_token.token_type == *t
     }
     fn peek_token_is(&self, t: &token::TokenType) -> bool {
-        return self.peek_token.token_type == *t;
+        self.peek_token.token_type == *t
     }
     fn expect_peek(&mut self, t: token::TokenType) -> bool {
         if self.peek_token_is(&t) {
             self.next_token();
-            return true;
+
+            true
         } else {
             self.peek_error(t);
-            return false;
+
+            false
         }
     }
 
@@ -551,11 +545,11 @@ impl Parser {
     }
 
     fn peek_precedence(&mut self) -> Precedence {
-        return token_type_to_precedence(&self.peek_token.token_type);
+        token_type_to_precedence(&self.peek_token.token_type)
     }
 
     fn cur_precedence(&mut self) -> Precedence {
-        return token_type_to_precedence(&self.cur_token.token_type);
+        token_type_to_precedence(&self.cur_token.token_type)
     }
 }
 
@@ -612,7 +606,7 @@ impl Parser {
 //         assert_eq!(program.statements.len(), 3);
 //         for stmt in program.statements {
 //             assert!(
-//                 if let ast::Statement::ReturnStatement { return_value: _ } = stmt {
+//                 if let ast::Statement::Return { return_value: _ } = stmt {
 //                     true
 //                 } else {
 //                     false
@@ -631,7 +625,7 @@ impl Parser {
 //         check_parser_errors(p);
 
 //         assert_eq!(program.statements.len(), 1);
-//         if let ast::Statement::ExpressionStatement { expression } = &program.statements[0] {
+//         if let ast::Statement::Expression { expression } = &program.statements[0] {
 //             if let ast::Expression::Identifier { value } = expression {
 //                 assert_eq!(value, "foobar");
 //             } else {
@@ -642,7 +636,7 @@ impl Parser {
 //             }
 //         } else {
 //             panic!(
-//                 "program.Statement[0] is not ast.ExpressionStatement. got={}",
+//                 "program.Statement[0] is not ast.Expression. got={}",
 //                 program.statements[0]
 //             );
 //         }
@@ -657,7 +651,7 @@ impl Parser {
 //         check_parser_errors(p);
 
 //         assert_eq!(program.statements.len(), 1);
-//         if let ast::Statement::ExpressionStatement { expression } = &program.statements[0] {
+//         if let ast::Statement::Expression { expression } = &program.statements[0] {
 //             if let ast::Expression::IntegerLiteral { value } = expression {
 //                 assert_eq!(*value, 5 as i64);
 //             } else {
@@ -668,7 +662,7 @@ impl Parser {
 //             }
 //         } else {
 //             panic!(
-//                 "program.Statement[0] is not ast.ExpressionStatement. got={}",
+//                 "program.Statement[0] is not ast.Expression. got={}",
 //                 program.statements[0]
 //             );
 //         }
@@ -691,7 +685,7 @@ impl Parser {
 //             check_parser_errors(p);
 //             assert_eq!(program.statements.len(), 1);
 
-//             if let ast::Statement::ExpressionStatement { expression } = &program.statements[0] {
+//             if let ast::Statement::Expression { expression } = &program.statements[0] {
 //                 if let ast::Expression::PrefixExpression { operator, right } = expression {
 //                     assert_eq!(operator, t.1);
 //                     let right_exp: ast::Expression = (**right).clone();
@@ -729,7 +723,7 @@ impl Parser {
 //             check_parser_errors(p);
 //             assert_eq!(program.statements.len(), 1);
 
-//             if let ast::Statement::ExpressionStatement { expression } = &program.statements[0] {
+//             if let ast::Statement::Expression { expression } = &program.statements[0] {
 //                 if let ast::Expression::InfixExpression {
 //                     left,
 //                     operator,
@@ -851,7 +845,7 @@ impl Parser {
 //         let program = p.parse_program();
 //         check_parser_errors(p);
 
-//         if let ast::Statement::ExpressionStatement {
+//         if let ast::Statement::Expression {
 //             expression: ast::Expression::ArrayLiteral { elements },
 //         } = &program.statements[0]
 //         {
@@ -873,7 +867,7 @@ impl Parser {
 //         let program = p.parse_program();
 //         check_parser_errors(p);
 
-//         if let ast::Statement::ExpressionStatement {
+//         if let ast::Statement::Expression {
 //             expression: ast::Expression::IndexExpression { left, index },
 //         } = &program.statements[0]
 //         {
@@ -960,7 +954,7 @@ impl Parser {
 //         let program = p.parse_program();
 //         check_parser_errors(p);
 
-//         if let ast::Statement::ExpressionStatement {
+//         if let ast::Statement::Expression {
 //             expression: ast::Expression::HashLiteral { pairs },
 //         } = &program.statements[0]
 //         {
@@ -994,7 +988,7 @@ impl Parser {
 //         let program = p.parse_program();
 //         check_parser_errors(p);
 
-//         if let ast::Statement::ExpressionStatement {
+//         if let ast::Statement::Expression {
 //             expression: ast::Expression::HashLiteral { pairs },
 //         } = &program.statements[0]
 //         {
@@ -1020,7 +1014,7 @@ impl Parser {
 //         let program = p.parse_program();
 //         check_parser_errors(p);
 
-//         if let ast::Statement::ExpressionStatement {
+//         if let ast::Statement::Expression {
 //             expression: ast::Expression::HashLiteral { pairs },
 //         } = &program.statements[0]
 //         {
@@ -1033,7 +1027,7 @@ impl Parser {
 //     }
 
 //     fn test_let_statement(stmt: &ast::Statement, t: &str) {
-//         if let ast::Statement::LetStatement { name, value: _ } = stmt {
+//         if let ast::Statement::Let { name, value: _ } = stmt {
 //             if let ast::Expression::Identifier { value } = name {
 //                 assert_eq!(value, t);
 //             } else {

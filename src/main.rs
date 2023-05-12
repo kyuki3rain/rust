@@ -57,7 +57,7 @@ mod test {
         file.flush().unwrap();
 
         Command::new("cc")
-            .args(&[&asm_path, "-o", &exe_path])
+            .args([&asm_path, "-o", &exe_path])
             .output()
             .expect("failed to build");
 

@@ -1,13 +1,14 @@
 use crate::{ast::Expression, environment};
 
 use super::ast;
+use core::panic;
 use std::cell::RefCell;
 use std::rc::Rc;
 // use std::collections::HashMap;
 
 enum Status {
-    DEFAULT,
-    RETURN,
+    Default,
+    Return,
 }
 
 pub struct Compiler {
@@ -19,27 +20,27 @@ impl Compiler {
     pub fn new() -> Self {
         Compiler {
             env: Rc::new(RefCell::new(environment::Environment::new(0, 0, 0))),
-            status: Status::DEFAULT,
+            status: Status::Default,
         }
     }
 
     pub fn compile_program(&mut self, program: ast::Program) -> Option<String> {
         let mut asm = String::new();
-        asm += &format!(".intel_syntax noprefix\n");
-        asm += &format!(".globl main\n");
+        asm += ".intel_syntax noprefix\n";
+        asm += ".globl main\n";
 
-        asm += &format!("main:\n");
+        asm += "main:\n";
 
-        asm += &format!("  push rbp\n");
-        asm += &format!("  mov rbp, rsp\n");
+        asm += "  push rbp\n";
+        asm += "  mov rbp, rsp\n";
 
         if let Some(r) = self.compile_block_statement(program.statements) {
             asm += &r;
         }
 
-        asm += &format!("  mov rsp, rbp\n");
-        asm += &format!("  pop rbp\n");
-        asm += &format!("  ret\n");
+        asm += "  mov rsp, rbp\n";
+        asm += "  pop rbp\n";
+        asm += "  ret\n";
 
         Some(asm)
     }
@@ -53,10 +54,10 @@ impl Compiler {
         for stmt in statements {
             if let Some(result) = self.compile_statement(stmt) {
                 asm += &result;
-                asm += &format!("  pop rax\n");
+                asm += "  pop rax\n";
 
-                if let Status::RETURN = self.status {
-                    self.status = Status::DEFAULT;
+                if let Status::Return = self.status {
+                    self.status = Status::Default;
                     return Some(asm);
                 }
             }
@@ -65,12 +66,12 @@ impl Compiler {
         let outer = Rc::clone(self.env.borrow_mut().outer.as_ref().unwrap());
         self.env = outer;
 
-        return Some(asm);
+        Some(asm)
     }
 
     fn compile_statement(&mut self, stmt: ast::Statement) -> Option<String> {
         match stmt {
-            // ast::Statement::LetStatement { name, value } => match self.eval_expression(value) {
+            // ast::Statement::Let { name, value } => match self.eval_expression(value) {
             //     Some(val) => {
             //         if !Evaluator::is_error(&val) {
             //             self.env.borrow_mut().set(name.to_string(), Rc::clone(&val));
@@ -79,21 +80,17 @@ impl Compiler {
             //     }
             //     None => return None,
             // },
-            ast::Statement::ReturnStatement { return_value } => {
+            ast::Statement::Return { return_value } => {
                 match self.compile_expression(return_value) {
                     Some(value) => {
-                        self.status = Status::RETURN;
-                        return Some(value);
+                        self.status = Status::Return;
+                        Some(value)
                     }
-                    None => return None,
+                    None => None,
                 }
             }
-            ast::Statement::ExpressionStatement { expression } => {
-                return self.compile_expression(expression)
-            }
-            ast::Statement::BlockStatement { statements } => {
-                return self.compile_block_statement(statements)
-            }
+            ast::Statement::Expression { expression } => self.compile_expression(expression),
+            ast::Statement::Block { statements } => self.compile_block_statement(statements),
         }
     }
 
@@ -101,19 +98,17 @@ impl Compiler {
         // let mut asm = String::new();
 
         match exp {
-            ast::Expression::Identifier { value } => return self.compile_identifier(value),
-            ast::Expression::IntegerLiteral { value } => {
-                return Some(format!("  push {}\n", value));
-            }
+            ast::Expression::Identifier { value } => self.compile_identifier(value),
+            ast::Expression::IntegerLiteral { value } => Some(format!("  push {}\n", value)),
             // ast::Expression::StringLiteral { value } => {
-            //     return Some(Rc::new(object::Object::String(value)))
+            //     Some(Rc::new(object::Object::String(value)))
             // }
             ast::Expression::PrefixExpression { operator, right } => {
                 match self.compile_expression(*right) {
                     Some(right_evaluated) => {
-                        return self.compile_prefix_expression(operator, right_evaluated);
+                        self.compile_prefix_expression(operator, right_evaluated)
                     }
-                    None => return None,
+                    None => None,
                 }
             }
             ast::Expression::InfixExpression {
@@ -130,16 +125,12 @@ impl Compiler {
                             // if Compiler::is_error(&left_evaluated) {
                             //     return Some(left_evaluated);
                             // }
-                            return self.compile_infix_expression(
-                                operator.to_string(),
-                                left_evaluated,
-                                right_evaluated,
-                            );
+                            self.compile_infix_expression(operator, left_evaluated, right_evaluated)
                         }
-                        None => return None,
+                        None => None,
                     }
                 }
-                None => return None,
+                None => None,
             },
             ast::Expression::AssignExpression { left, right } => {
                 let mut asm = String::new();
@@ -153,24 +144,24 @@ impl Compiler {
                                 asm += &format!("  sub rsp, {}\n", 8);
                             }
 
-                            if let Some(variable) = self.env.borrow().get_var(&value) {
-                                asm += &format!("  mov rax, rbp\n");
+                            if let Some(variable) = self.env.borrow().get(&value) {
+                                asm += "  mov rax, rbp\n";
                                 asm += &format!("  sub rax, {}\n", variable.offset);
-                                asm += &format!("  push rax\n");
+                                asm += "  push rax\n";
 
                                 asm += &right_evaluated;
 
-                                asm += &format!("  pop rdi\n");
-                                asm += &format!("  pop rax\n");
-                                asm += &format!("  mov [rax], rdi\n");
-                                asm += &format!("  push rdi\n");
+                                asm += "  pop rdi\n";
+                                asm += "  pop rax\n";
+                                asm += "  mov [rax], rdi\n";
+                                asm += "  push rdi\n";
                             }
 
-                            return Some(asm);
+                            Some(asm)
                         }
-                        _ => return None,
+                        _ => None,
                     },
-                    None => return None,
+                    None => None,
                 }
             }
             // ast::Expression::Boolean { value } => return Some(Evaluator::eval_boolean(value)),
@@ -198,11 +189,11 @@ impl Compiler {
                 condition,
                 consequence,
                 alternative,
-            } => return self.compile_if_expression(condition, consequence, alternative),
+            } => self.compile_if_expression(*condition, *consequence, alternative),
             ast::Expression::WhileExpression {
                 condition,
                 consequence,
-            } => return self.compile_while_expression(condition, consequence),
+            } => self.compile_while_expression(*condition, *consequence),
             // ast::Expression::FunctionLiteral { parameters, body } => {
             //     return Some(Rc::new(object::Object::Function {
             //         parameters,
@@ -248,7 +239,7 @@ impl Compiler {
 
             //     Some(Rc::new(object::Object::Hash(hash)))
             // }
-            ast::Expression::NeedNext => return None,
+            ast::Expression::NeedNext => None,
         }
     }
 
@@ -346,14 +337,12 @@ impl Compiler {
             "-" => {
                 if let Some(left) = self.compile_expression(Expression::IntegerLiteral { value: 0 })
                 {
-                    return self.compile_infix_expression(operator, left, right);
+                    self.compile_infix_expression(operator, left, right)
                 } else {
-                    return None;
+                    None
                 }
             }
-            _ => {
-                return None;
-            }
+            _ => None,
         }
     }
 
@@ -368,51 +357,51 @@ impl Compiler {
         asm += &left;
         asm += &right;
 
-        asm += &format!("  pop rdi\n");
-        asm += &format!("  pop rax\n");
+        asm += "  pop rdi\n";
+        asm += "  pop rax\n";
 
         match &*operator {
-            "+" => asm += &format!("  add rax, rdi\n"),
-            "-" => asm += &format!("  sub rax, rdi\n"),
-            "*" => asm += &format!("  imul rax, rdi\n"),
+            "+" => asm += "  add rax, rdi\n",
+            "-" => asm += "  sub rax, rdi\n",
+            "*" => asm += "  imul rax, rdi\n",
             "/" => {
-                asm += &format!("  cqo\n");
-                asm += &format!("  idiv rdi\n");
+                asm += "  cqo\n";
+                asm += "  idiv rdi\n";
             }
             "==" => {
-                asm += &format!("  cmp rax, rdi\n");
-                asm += &format!("  sete al\n");
-                asm += &format!("  movzb rax, al\n");
+                asm += "  cmp rax, rdi\n";
+                asm += "  sete al\n";
+                asm += "  movzb rax, al\n";
             }
             "!=" => {
-                asm += &format!("  cmp rax, rdi\n");
-                asm += &format!("  setne al\n");
-                asm += &format!("  movzb rax, al\n");
+                asm += "  cmp rax, rdi\n";
+                asm += "  setne al\n";
+                asm += "  movzb rax, al\n";
             }
             ">" => {
-                asm += &format!("  cmp rdi, rax\n");
-                asm += &format!("  setl al\n");
-                asm += &format!("  movzb rax, al\n");
+                asm += "  cmp rdi, rax\n";
+                asm += "  setl al\n";
+                asm += "  movzb rax, al\n";
             }
             "<" => {
-                asm += &format!("  cmp rax, rdi\n");
-                asm += &format!("  setl al\n");
-                asm += &format!("  movzb rax, al\n");
+                asm += "  cmp rax, rdi\n";
+                asm += "  setl al\n";
+                asm += "  movzb rax, al\n";
             }
             ">=" => {
-                asm += &format!("  cmp rdi, rax\n");
-                asm += &format!("  setle al\n");
-                asm += &format!("  movzb rax, al\n");
+                asm += "  cmp rdi, rax\n";
+                asm += "  setle al\n";
+                asm += "  movzb rax, al\n";
             }
             "<=" => {
-                asm += &format!("  cmp rax, rdi\n");
-                asm += &format!("  setle al\n");
-                asm += &format!("  movzb rax, al\n");
+                asm += "  cmp rax, rdi\n";
+                asm += "  setle al\n";
+                asm += "  movzb rax, al\n";
             }
             _ => {}
         }
 
-        asm += &format!("  push rax\n");
+        asm += "  push rax\n";
 
         Some(asm)
 
@@ -582,24 +571,24 @@ impl Compiler {
 
     fn compile_if_expression(
         &mut self,
-        condition: Box<ast::Expression>,
-        consequence: Box<ast::Statement>,
+        condition: ast::Expression,
+        consequence: ast::Statement,
         alternative: Option<Box<ast::Statement>>,
     ) -> Option<String> {
         let mut asm = String::new();
 
-        if let Some(result) = self.compile_expression(*condition) {
+        if let Some(result) = self.compile_expression(condition) {
             asm += &result;
-            asm += &format!("  pop rax\n");
-            asm += &format!("  cmp rax, 0\n");
+            asm += "  pop rax\n";
+            asm += "  cmp rax, 0\n";
 
             let label_count = self.env.borrow_mut().inc_label_count() - 1;
 
             if let Some(alternative) = alternative {
                 asm += &format!("  je .Lelse{}\n", label_count);
-                if let Some(result) = self.compile_statement(*consequence) {
+                if let Some(result) = self.compile_statement(consequence) {
                     asm += &result;
-                    asm += &format!("  push rax\n");
+                    asm += "  push rax\n";
                 }
 
                 asm += &format!("  jmp .Lend{}\n", label_count);
@@ -607,66 +596,66 @@ impl Compiler {
 
                 if let Some(result) = self.compile_statement(*alternative) {
                     asm += &result;
-                    asm += &format!("  push rax\n");
+                    asm += "  push rax\n";
                 }
             } else {
                 asm += &format!("  je .Lend{}\n", label_count);
 
-                if let Some(result) = self.compile_statement(*consequence) {
+                if let Some(result) = self.compile_statement(consequence) {
                     asm += &result;
-                    asm += &format!("  push rax\n");
+                    asm += "  push rax\n";
                 }
             }
 
             asm += &format!(".Lend{}:\n", label_count);
 
-            return Some(asm);
+            Some(asm)
         } else {
-            return None;
+            None
         }
     }
 
     fn compile_while_expression(
         &mut self,
-        condition: Box<ast::Expression>,
-        consequence: Box<ast::Statement>,
+        condition: ast::Expression,
+        consequence: ast::Statement,
     ) -> Option<String> {
         let mut asm = String::new();
 
         let label_count = self.env.borrow_mut().inc_label_count() - 1;
         asm += &format!(".Lbegin{}:\n", label_count);
 
-        if let Some(result) = self.compile_expression(*condition.clone()) {
+        if let Some(result) = self.compile_expression(condition) {
             asm += &result;
-            asm += &format!("  pop rax\n");
-            asm += &format!("  cmp rax, 0\n");
+            asm += "  pop rax\n";
+            asm += "  cmp rax, 0\n";
             asm += &format!("  je .Lend{}\n", label_count);
 
-            if let Some(result) = self.compile_statement(*consequence) {
+            if let Some(result) = self.compile_statement(consequence) {
                 asm += &result;
-                asm += &format!("  push rax\n");
+                asm += "  push rax\n";
             }
 
             asm += &format!("  jmp .Lbegin{}\n", label_count);
             asm += &format!(".Lend{}:\n", label_count);
         }
 
-        return Some(asm);
+        Some(asm)
     }
 
     fn compile_identifier(&mut self, ident: String) -> Option<String> {
-        if let Some(variable) = self.env.borrow().get_var(&ident) {
+        if let Some(variable) = self.env.borrow().get(&ident) {
             let mut asm = String::new();
-            asm += &format!("  mov rax, rbp\n");
+            asm += "  mov rax, rbp\n";
             asm += &format!("  sub rax, {}\n", variable.offset);
-            asm += &format!("  mov rax, [rax]\n");
-            asm += &format!("  push rax\n");
+            asm += "  mov rax, [rax]\n";
+            asm += "  push rax\n";
             return Some(asm);
         }
         // if let Some(value) = self.builtin.get(&ident) {
         //     return Some(Rc::clone(value));
         // }
-        return Some(format!("identifier not found: {}", ident));
+        panic!("identifier not found: {}", ident);
     }
 
     // fn is_truthy(obj: Rc<object::Object>) -> bool {
