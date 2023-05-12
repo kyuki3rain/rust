@@ -55,7 +55,25 @@ impl Environment {
     }
 
     pub fn contains_key(&self, name: &str) -> bool {
-        self.store.contains_key(name)
+        let stack = self.stack;
+        self.contains_key_with_stack(name, stack)
+    }
+
+    pub fn contains_key_with_stack(&self, name: &str, stack: usize) -> bool {
+        if self.store.contains_key(name) {
+            true
+        } else {
+            match &self.outer {
+                Some(out_env) => {
+                    if out_env.borrow().stack == stack {
+                        out_env.borrow_mut().contains_key_with_stack(name, stack)
+                    } else {
+                        false
+                    }
+                }
+                None => false,
+            }
+        }
     }
 
     pub fn inc_label_count(&mut self) -> usize {

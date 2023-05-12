@@ -50,6 +50,10 @@ mod test {
             .output()
             .expect("failed to compile");
 
+        if !output.status.success() {
+            return output;
+        }
+
         let mut path = env::current_dir().unwrap();
         path.push(&asm_path);
         let mut file = File::create(path).unwrap();
@@ -215,8 +219,8 @@ mod test {
 
     #[test]
     fn test_block() {
-        let program = "a = 0; b = 5; { b = 10; } a + b";
+        let program = "a = 5; { b = 2; } a + b";
         let output = execute(program);
-        assert_eq!(output.status.code().unwrap(), 5);
+        assert!(!output.status.success());
     }
 }
