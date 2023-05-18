@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(PartialEq)]
 pub struct Program {
-    pub statements: Vec<Statement>,
+    pub functions: Vec<Function>,
 }
 
 impl Program {
@@ -18,9 +18,28 @@ impl Program {
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut s = "".to_string();
-        for stmt in &self.statements {
-            s += &format!("{}\r\n", stmt);
+        for func in &self.functions {
+            s += &format!("{}\r\n", func);
         }
+
+        write!(f, "{}", s)
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub struct Function {
+    pub name: String,
+    pub parameters: Vec<String>,
+    pub body: Statement,
+}
+
+impl fmt::Display for Function {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::new();
+        s += &format!("fn {}(", self.name);
+        s += &self.parameters.join(", ");
+        s += ") ";
+        s += &format!("{}\r\n", self.body);
 
         write!(f, "{}", s)
     }
@@ -54,13 +73,13 @@ impl fmt::Display for Statement {
             //     return write!(f, "let {} = {};", name, value)
             // }
             Statement::Return { return_value } => {
-                write!(f, "return {};", return_value)
+                write!(f, "return {}", return_value)
             }
             Statement::Expression { expression } => write!(f, "{}", expression),
             Statement::Block { statements } => {
                 let mut s = "".to_string();
                 for stmt in statements {
-                    s += &format!("\t{}\r\n", stmt);
+                    s += &format!("\t{};\r\n", stmt);
                 }
                 write!(f, "{{\r\n{}}}", s)
             }
@@ -115,10 +134,10 @@ pub enum Expression {
     //     parameters: Vec<Expression>,
     //     body: Box<Statement>,
     // },
-    // CallExpression {
-    //     function: Box<Expression>,
-    //     arguments: Vec<Expression>,
-    // },
+    CallExpression {
+        function: String,
+        arguments: Vec<Expression>,
+    },
     // HashLiteral {
     //     pairs: Vec<(Expression, Expression)>,
     // },
@@ -189,20 +208,20 @@ impl fmt::Display for Expression {
             //     }
             //     return write!(f, "fn ({}) {}", s, body);
             // }
-            // Expression::CallExpression {
-            //     function,
-            //     arguments,
-            // } => {
-            //     let mut s = "".to_string();
-            //     for (i, a) in arguments.iter().enumerate() {
-            //         if i == 0 {
-            //             s += &format!("{}", a);
-            //         } else {
-            //             s += &format!(", {}", a);
-            //         }
-            //     }
-            //     return write!(f, "{}({})", function, s);
-            // }
+            Expression::CallExpression {
+                function,
+                arguments,
+            } => {
+                let mut s = "".to_string();
+                for (i, a) in arguments.iter().enumerate() {
+                    if i == 0 {
+                        s += &format!("{}", a);
+                    } else {
+                        s += &format!(", {}", a);
+                    }
+                }
+                write!(f, "{}({})", function, s)
+            }
             // Expression::HashLiteral { pairs } => {
             //     let mut s = "{ ".to_string();
             //     for (i, (key, value)) in pairs.iter().enumerate() {

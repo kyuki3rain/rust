@@ -32,7 +32,7 @@ pub fn token_type_to_precedence(t: &token::TokenType) -> Precedence {
         token::TokenType::Slash => Precedence::Product,
         token::TokenType::Asterisk => Precedence::Product,
         // token::TokenType::DOT => Precedence::DOT,
-        // token::TokenType::LPAREN => Precedence::CALL,
+        token::TokenType::LParen => Precedence::Call,
         // token::TokenType::LBRACKET => Precedence::INDEX,
         _ => Precedence::Lowest,
     }
@@ -82,17 +82,71 @@ impl Parser {
 
     pub fn parse_program(&mut self) -> ast::Program {
         let mut program = ast::Program {
-            statements: Vec::new(),
+            functions: Vec::new(),
         };
-        while self.cur_token.token_type != token::TokenType::EoF {
-            if let Some(stmt) = self.parse_statement() {
-                program.statements.push(stmt);
+        while self.cur_token.token_type == token::TokenType::Function {
+            if let Some(func) = self.parse_function() {
+                program.functions.push(func);
             }
             self.next_token();
         }
 
         program
     }
+
+    fn parse_function(&mut self) -> Option<ast::Function> {
+        let mut function = ast::Function {
+            name: "".to_string(),
+            parameters: Vec::new(),
+            body: ast::Statement::Block {
+                statements: Vec::new(),
+            },
+        };
+
+        if !self.expect_peek(token::TokenType::Ident) {
+            return None;
+        }
+        function.name = self.cur_token.literal.to_string();
+
+        if !self.expect_peek(token::TokenType::LParen) {
+            return None;
+        }
+
+        function.parameters = self.parse_function_parameters()?;
+
+        if !self.expect_peek(token::TokenType::LBrace) {
+            return None;
+        }
+
+        function.body = self.parse_block_statement()?;
+
+        Some(function)
+    }
+
+    fn parse_function_parameters(&mut self) -> Option<Vec<String>> {
+        let mut identifiers = Vec::new();
+
+        if self.peek_token_is(&token::TokenType::RParen) {
+            self.next_token();
+            return Some(identifiers);
+        }
+        self.next_token();
+
+        identifiers.push(self.cur_token.literal.to_string());
+
+        while self.peek_token_is(&token::TokenType::Comma) {
+            self.next_token();
+            self.next_token();
+            identifiers.push(self.cur_token.literal.to_string());
+        }
+
+        if !self.expect_peek(token::TokenType::RParen) {
+            return None;
+        }
+
+        Some(identifiers)
+    }
+
     fn parse_statement(&mut self) -> Option<ast::Statement> {
         match self.cur_token.token_type {
             // token::TokenType::LET => return self.parse_let_statement(),
@@ -101,6 +155,7 @@ impl Parser {
             _ => self.parse_expression_statement(),
         }
     }
+
     // fn parse_let_statement(&mut self) -> Option<ast::Statement> {
     //     if !self.expect_peek(token::TokenType::IDENT) {
     //         return None;
@@ -235,7 +290,7 @@ impl Parser {
             token::TokenType::Gt => self.parse_infix_expression(left_exp),
             token::TokenType::LtEq => self.parse_infix_expression(left_exp),
             token::TokenType::GtEq => self.parse_infix_expression(left_exp),
-            // token::TokenType::LPAREN => self.parse_call_expression(left_exp),
+            token::TokenType::LParen => self.parse_call_expression(*left_exp),
             // token::TokenType::LBRACKET => self.parse_index_expression(left_exp),
             _ => None,
         }
@@ -291,48 +346,48 @@ impl Parser {
             })
     }
 
-    // fn parse_call_expression(&mut self, function: Box<ast::Expression>) -> Option<ast::Expression> {
-    //     match self.parse_expression_list(token::TokenType::RPAREN) {
-    //         Some(arguments) => {
-    //             return Some(ast::Expression::CallExpression {
-    //                 function,
-    //                 arguments,
-    //             })
-    //         }
-    //         None => return None,
-    //     }
-    // }
+    fn parse_call_expression(&mut self, function: ast::Expression) -> Option<ast::Expression> {
+        match function {
+            ast::Expression::Identifier { value } => self
+                .parse_expression_list(token::TokenType::RParen)
+                .map(|arguments| ast::Expression::CallExpression {
+                    function: value,
+                    arguments,
+                }),
+            _ => None,
+        }
+    }
 
-    // fn parse_expression_list(&mut self, end: token::TokenType) -> Option<Vec<ast::Expression>> {
-    //     let mut args = Vec::new();
+    fn parse_expression_list(&mut self, end: token::TokenType) -> Option<Vec<ast::Expression>> {
+        let mut args = Vec::new();
 
-    //     if self.peek_token_is(&end) {
-    //         self.next_token();
-    //         return Some(args);
-    //     }
+        if self.peek_token_is(&end) {
+            self.next_token();
+            return Some(args);
+        }
+        self.next_token();
 
-    //     self.next_token();
-    //     match self.parse_expression(Precedence::LOWEST) {
-    //         Some(expression) => {
-    //             args.push(expression);
-    //             while self.peek_token_is(&token::TokenType::COMMA) {
-    //                 self.next_token();
-    //                 self.next_token();
-    //                 match self.parse_expression(Precedence::LOWEST) {
-    //                     Some(exp) => args.push(exp),
-    //                     None => return None,
-    //                 }
-    //             }
+        match self.parse_expression(Precedence::Lowest) {
+            Some(expression) => {
+                args.push(expression);
+                while self.peek_token_is(&token::TokenType::Comma) {
+                    self.next_token();
+                    self.next_token();
+                    match self.parse_expression(Precedence::Lowest) {
+                        Some(exp) => args.push(exp),
+                        None => return None,
+                    }
+                }
 
-    //             if !self.expect_peek(end) {
-    //                 return None;
-    //             }
+                if !self.expect_peek(end) {
+                    return None;
+                }
 
-    //             return Some(args);
-    //         }
-    //         None => return None,
-    //     };
-    // }
+                Some(args)
+            }
+            None => None,
+        }
+    }
 
     fn parse_if_expression(&mut self) -> Option<ast::Expression> {
         if !self.expect_peek(token::TokenType::LParen) {
@@ -342,7 +397,7 @@ impl Parser {
         self.next_token();
         match self.parse_expression(Precedence::Lowest) {
             Some(condition) => {
-                if !self.expect_peek(token::TokenType::RPren) {
+                if !self.expect_peek(token::TokenType::RParen) {
                     return None;
                 }
                 if !self.expect_peek(token::TokenType::LBrace) {
@@ -393,7 +448,7 @@ impl Parser {
         self.next_token();
         match self.parse_expression(Precedence::Lowest) {
             Some(condition) => {
-                if !self.expect_peek(token::TokenType::RPren) {
+                if !self.expect_peek(token::TokenType::RParen) {
                     return None;
                 }
                 if !self.expect_peek(token::TokenType::LBrace) {
@@ -504,7 +559,7 @@ impl Parser {
 
         let exp = self.parse_expression(Precedence::Lowest);
 
-        if !self.expect_peek(token::TokenType::RPren) {
+        if !self.expect_peek(token::TokenType::RParen) {
             return None;
         }
 
@@ -550,6 +605,60 @@ impl Parser {
 
     fn cur_precedence(&mut self) -> Precedence {
         token_type_to_precedence(&self.cur_token.token_type)
+    }
+}
+
+#[cfg(test)]
+mod lexer_tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let input = "
+        fn main(a, b) {
+            x = 5;
+            y = 10;
+            foobar = 838383;
+        }
+        "
+        .to_string();
+
+        let l = lexer::Lexer::new(&input);
+
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        println!("{}", program);
+
+        assert_eq!(
+            program.to_string(),
+            "fn main(a, b) {\r\n\tx = 5;\r\n\ty = 10;\r\n\tfoobar = 838383;\r\n}\r\n\r\n"
+        );
+        assert_eq!(program.functions.len(), 1);
+    }
+
+    #[test]
+    fn test2() {
+        let input = "
+        fn add(a, b) {
+            return a + b;
+        }
+        fn main() {
+            add(1, 2);
+        }
+        "
+        .to_string();
+
+        let l = lexer::Lexer::new(&input);
+
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        println!("{}", program);
+
+        assert_eq!(
+            program.to_string(),
+            "fn add(a, b) {\r\n\treturn (a + b);\r\n}\r\n\r\nfn main() {\r\n\tadd(1, 2);\r\n}\r\n\r\n"
+        );
+        assert_eq!(program.functions.len(), 2);
     }
 }
 

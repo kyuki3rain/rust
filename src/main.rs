@@ -17,7 +17,6 @@ fn main() {
     let l = lexer::Lexer::new(&args[1]);
     let mut p = parser::Parser::new(l);
     let program = p.parse_program();
-    // println!("Program: {}", program);
 
     let asm = compiler::Compiler::new().compile_program(program).unwrap();
 
@@ -75,152 +74,198 @@ mod test {
 
     #[test]
     fn test_compile() {
-        let program = "0";
+        let program = "fn main() { return 0; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 0);
 
-        let program = "42";
+        let program = "fn main() { return 42; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 42);
 
-        let program = "123";
+        let program = "fn main() { return 123; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 123);
     }
 
     #[test]
     fn test_plusminus() {
-        let program = "1+2";
+        let program = "fn main() { return 1+2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 3);
 
-        let program = "1-2";
+        let program = "fn main() { return 1-2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 255);
 
-        let program = "114+41-136";
+        let program = "fn main() { return 114+41-136; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 19);
     }
 
     #[test]
     fn test_muldiv() {
-        let program = "4*2";
+        let program = "fn main() { return 4*2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 8);
 
-        let program = "4/2";
+        let program = "fn main() { return 4/2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 2);
 
-        let program = "3*4/2";
+        let program = "fn main() { return 3*4/2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 6);
     }
 
     #[test]
     fn test_arithmetic() {
-        let program = "4+2*3";
+        let program = "fn main() { return 4+2*3; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 10);
 
-        let program = "(4+2)*3";
+        let program = "fn main() { return (4+2)*3; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 18);
     }
 
     #[test]
     fn test_minusprefix() {
-        let program = "-1";
+        let program = "fn main() { return -1; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 255);
 
-        let program = "-5+10";
+        let program = "fn main() { return -5+10; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 5);
     }
 
     #[test]
     fn test_cmp() {
-        let program = "1>2";
+        let program = "fn main() { return 1>2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 0);
 
-        let program = "1<2";
+        let program = "fn main() { return 1<2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 1);
 
-        let program = "1<=2";
+        let program = "fn main() { return 1<=2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 1);
 
-        let program = "1>=2";
+        let program = "fn main() { return 1>=2; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 0);
 
-        let program = "1>=1";
+        let program = "fn main() { return 1>=1; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 1);
 
-        let program = "1==1";
+        let program = "fn main() { return 1==1; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 1);
 
-        let program = "1!=1";
+        let program = "fn main() { return 1!=1; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 0);
     }
 
     #[test]
     fn test_semicolon() {
-        let program = "5 + 10; 8 * 5";
+        let program = "fn main() { 5 + 10; 8 * 5; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 40);
     }
 
     #[test]
     fn test_ident() {
-        let program = "a = 10; a + 10";
+        let program = "fn main() { a = 10; a + 10; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 20);
     }
 
     #[test]
     fn test_complex_program() {
-        let program = "a = 5; b = 10; c = a + b; d = a * b; d - c";
+        let program = "fn main() { a = 5; b = 10; c = a + b; d = a * b; d - c; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 35);
     }
 
     #[test]
     fn test_return() {
-        let program = "a = 5; return a + 2; a + 5";
+        let program = "fn main() { a = 5; return a + 2; a + 5; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 7);
     }
 
     #[test]
     fn test_if_else() {
-        let program = "if (5 > 4) { 7 } else { 8 }";
+        let program = "fn main() { return if (5 > 4) { 7 } else { 8 }; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 7);
 
-        let program = "if (5 < 4) { 7 } else { 8 }";
+        let program = "fn main() { return if (5 < 4) { 7 } else { 8 }; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 8);
     }
 
     #[test]
     fn test_while() {
-        let program = "a = 0; while(a < 10) { a = a + 1; } a";
+        let program = "fn main() { a = 0; while(a < 10) { a = a + 1; } return a; }";
         let output = execute(program);
         assert_eq!(output.status.code().unwrap(), 10);
     }
 
     #[test]
     fn test_block() {
-        let program = "a = 5; { b = 2; } a + b";
+        let program = "fn main() { a = 5; { b = 2; } return a + b; }";
         let output = execute(program);
         assert!(!output.status.success());
+    }
+
+    #[test]
+    fn test_fn() {
+        let program = "
+        fn add(a, b) {
+            return a + b;
+        }
+        fn main() {
+            add(1, 2);
+        }
+        ";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 3);
+    }
+
+    #[test]
+    fn test_fibonacci() {
+        let program = "
+        fn fib(a, b, i) {
+            if(b >= 21) { return a; }
+
+            fib(b, a + b, i + 1);
+        }
+        fn main() {
+            fib(1, 1, 0);
+        }
+        ";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 13);
+    }
+
+    #[test]
+    fn test_fn2() {
+        let program = "
+        fn f(a, i) {
+            if(i >= 0) { return a; }
+
+            f(a + 4, i + 1);
+        }
+        fn main() {
+            f(1, 0);
+        }
+        ";
+        let output = execute(program);
+        assert_eq!(output.status.code().unwrap(), 13);
     }
 }

@@ -85,10 +85,10 @@ impl Lexer {
                     token::new_token(token::TokenType::Illegal, self.ch.to_string())
                 }
             }
-            // ',' => token::new_token(token::TokenType::COMMA, self.ch.to_string()),
+            ',' => token::new_token(token::TokenType::Comma, self.ch.to_string()),
             ';' => token::new_token(token::TokenType::SemiColon, self.ch.to_string()),
             '(' => token::new_token(token::TokenType::LParen, self.ch.to_string()),
-            ')' => token::new_token(token::TokenType::RPren, self.ch.to_string()),
+            ')' => token::new_token(token::TokenType::RParen, self.ch.to_string()),
             '{' => token::new_token(token::TokenType::LBrace, self.ch.to_string()),
             '}' => token::new_token(token::TokenType::RBrace, self.ch.to_string()),
             // '[' => token::new_token(token::TokenType::LBRACKET, self.ch.to_string()),

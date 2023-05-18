@@ -1,9 +1,14 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-pub struct Variable {
-    pub offset: usize,
+#[derive(Debug)]
+pub enum Variable {
+    Local { offset: usize },
+    Argument { name: String },
 }
 
+pub static REGISTERS: [&str; 4] = ["rcx", "rdx", "r8", "r9"];
+
+#[derive(Debug)]
 pub struct Environment {
     pub store: HashMap<String, Rc<Variable>>,
     pub offset: usize,
@@ -48,8 +53,17 @@ impl Environment {
         self.offset += 8;
         self.store.insert(
             name.to_string(),
-            Rc::new(Variable {
+            Rc::new(Variable::Local {
                 offset: self.offset,
+            }),
+        );
+    }
+
+    pub fn set_argument(&mut self, name: &str, reg_name: &str) {
+        self.store.insert(
+            name.to_string(),
+            Rc::new(Variable::Argument {
+                name: reg_name.to_string(),
             }),
         );
     }
@@ -91,9 +105,10 @@ impl Environment {
         env
     }
 
-    // pub fn new_fn_env(outer: Rc<RefCell<Environment>>) -> Environment {
-    //     let mut env = Environment::new(0, outer.borrow().stack + 1, outer.borrow().label_count);
-    //     env.outer = Some(outer);
-    //     env
-    // }
+    pub fn new_fn_env(outer: Rc<RefCell<Environment>>) -> Environment {
+        let mut env = Environment::new(0, outer.borrow().stack + 1, outer.borrow().label_count);
+        env.outer = Some(outer);
+
+        env
+    }
 }

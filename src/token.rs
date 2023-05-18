@@ -22,18 +22,19 @@ pub enum TokenType {
     LtEq,  // <=
     GtEq,  // >=
 
-    // COMMA, // ,
+    Comma,     // ,
     SemiColon, // ;
     // COLON, // :
     // DOT, // .
     LParen, // (
-    RPren,  // )
+    RParen, // )
     LBrace, // {
     RBrace, // }
     // LBRACKET, // [
     // RBRACKET, // ]
 
-    // FUNCTION, // fn
+    //
+    Function, // fn
     // LET,     // let
     // TRUE,   // true
     // FALSE, // false
@@ -61,7 +62,7 @@ impl fmt::Display for Token {
 
 pub fn lookup_ident(ident: &str) -> TokenType {
     match ident {
-        // "fn" => TokenType::FUNCTION,
+        "fn" => TokenType::Function,
         // "let" => TokenType::LET,
         // "true" => TokenType::TRUE,
         // "false" => TokenType::FALSE,
