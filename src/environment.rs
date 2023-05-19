@@ -1,9 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
-pub enum Variable {
-    Local { offset: usize },
-    Argument { name: String },
+pub struct Variable {
+    pub offset: usize,
 }
 
 pub static REGISTERS: [&str; 4] = ["rcx", "rdx", "r8", "r9"];
@@ -53,17 +52,8 @@ impl Environment {
         self.offset += 8;
         self.store.insert(
             name.to_string(),
-            Rc::new(Variable::Local {
+            Rc::new(Variable {
                 offset: self.offset,
-            }),
-        );
-    }
-
-    pub fn set_argument(&mut self, name: &str, reg_name: &str) {
-        self.store.insert(
-            name.to_string(),
-            Rc::new(Variable::Argument {
-                name: reg_name.to_string(),
             }),
         );
     }

@@ -180,27 +180,16 @@ impl Compiler {
                             }
 
                             if let Some(variable) = self.env.borrow().get(&value) {
-                                match &*variable {
-                                    environment::Variable::Local { offset } => {
-                                        asm += "  mov rax, rbp\n";
-                                        asm += &format!("  sub rax, {}\n", offset);
-                                        asm += "  push rax\n";
+                                asm += "  mov rax, rbp\n";
+                                asm += &format!("  sub rax, {}\n", variable.offset);
+                                asm += "  push rax\n";
 
-                                        asm += &right_evaluated;
+                                asm += &right_evaluated;
 
-                                        asm += "  pop rdi\n";
-                                        asm += "  pop rax\n";
-                                        asm += "  mov [rax], rdi\n";
-                                        asm += "  push rdi\n";
-                                    }
-                                    environment::Variable::Argument { name } => {
-                                        asm += &right_evaluated;
-
-                                        asm += "  pop rax\n";
-                                        asm += &format!("  mov {}, rax\n", name);
-                                        asm += "  push rax\n";
-                                    }
-                                }
+                                asm += "  pop rdi\n";
+                                asm += "  pop rax\n";
+                                asm += "  mov [rax], rdi\n";
+                                asm += "  push rdi\n";
                             }
 
                             Some(asm)
@@ -256,7 +245,7 @@ impl Compiler {
                 // }
 
                 let mut asm = String::new();
-                for (i, arg) in arguments.into_iter().enumerate() {
+                for (i, arg) in arguments.into_iter().rev().enumerate() {
                     if let Some(result) = self.compile_expression(arg) {
                         if i >= environment::REGISTERS.len() {
                             return None;
@@ -650,6 +639,7 @@ impl Compiler {
 
                 asm += &format!("  jmp .Lend{}\n", label_count);
                 asm += &format!(".Lelse{}:\n", label_count);
+                asm += "  push rax\n";
 
                 if let Some(result) = self.compile_statement(*alternative) {
                     if let Status::Return = self.status {
@@ -671,6 +661,7 @@ impl Compiler {
             }
 
             asm += &format!(".Lend{}:\n", label_count);
+            asm += "  push rax\n";
 
             Some(asm)
         } else {
@@ -709,19 +700,11 @@ impl Compiler {
     fn compile_identifier(&mut self, ident: String) -> Option<String> {
         if let Some(variable) = self.env.borrow().get(&ident) {
             let mut asm = String::new();
-            match &*variable {
-                environment::Variable::Local { offset } => {
-                    asm += &format!("# ident: {}, offset: {}\n", ident, offset);
-                    asm += "  mov rax, rbp\n";
-                    asm += &format!("  sub rax, {}\n", offset);
-                    asm += "  mov rax, [rax]\n";
-                    asm += "  push rax\n";
-                }
-                environment::Variable::Argument { name } => {
-                    asm += &format!("  mov rax, {}\n", name);
-                    asm += "  push rax\n";
-                }
-            }
+            asm += &format!("# ident: {}, offset: {}\n", ident, variable.offset);
+            asm += "  mov rax, rbp\n";
+            asm += &format!("  sub rax, {}\n", variable.offset);
+            asm += "  mov rax, [rax]\n";
+            asm += "  push rax\n";
             return Some(asm);
         }
         // if let Some(value) = self.builtin.get(&ident) {

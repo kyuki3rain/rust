@@ -241,7 +241,7 @@ mod test {
     fn test_fibonacci() {
         let program = "
         fn fib(a, b, i) {
-            if(b >= 21) { return a; }
+            if(i >= 10) { return b; }
 
             fib(b, a + b, i + 1);
         }
@@ -250,22 +250,22 @@ mod test {
         }
         ";
         let output = execute(program);
-        assert_eq!(output.status.code().unwrap(), 13);
+        assert_eq!(output.status.code().unwrap(), 144);
     }
 
     #[test]
     fn test_fn2() {
         let program = "
         fn f(a, i) {
-            if(i >= 0) { return a; }
+            if(i >= 2) { return a; }
 
-            f(a + 4, i + 1);
+            f(a + 2, i + 1);
         }
         fn main() {
             f(1, 0);
         }
         ";
         let output = execute(program);
-        assert_eq!(output.status.code().unwrap(), 13);
+        assert_eq!(output.status.code().unwrap(), 5);
     }
 }
